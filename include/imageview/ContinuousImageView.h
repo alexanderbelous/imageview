@@ -13,7 +13,7 @@ namespace imageview {
 
 // Non-owning view into a bitmap image with the specified pixel format.
 template <class PixelFormat, bool Mutable = false>
-class ContiguousImageView {
+class ContinuousImageView {
  public:
   static_assert(IsPixelFormat<PixelFormat>::value, "Not a PixelFormat.");
 
@@ -22,7 +22,7 @@ class ContiguousImageView {
   using color_type = typename PixelFormat::color_type;
 
   // Construct an empty view.
-  constexpr ContiguousImageView() = default;
+  constexpr ContinuousImageView() = default;
   // Construct a view into an image.
   // \param height - height of the image.
   // \param width - width of the image.
@@ -31,12 +31,12 @@ class ContiguousImageView {
   //          height * width * PixelFormat::kBytesPerPixel.
   //        Pixels are assumed to be stored contiguously, with each pixel
   //        occupying exactly PixelFormat::kBytesPerPixel.
-  constexpr ContiguousImageView(unsigned int height, unsigned int width,
+  constexpr ContinuousImageView(unsigned int height, unsigned int width,
                                 gsl::span<byte_type> data);
   // Construct a read-only view from a mutable view.
   template <class Enable = std::enable_if_t<!Mutable>>
-  constexpr ContiguousImageView(
-      ContiguousImageView<PixelFormat, !Mutable> image);
+  constexpr ContinuousImageView(
+      ContinuousImageView<PixelFormat, !Mutable> image);
   // Returns the height of the image.
   constexpr unsigned int height() const;
   // Returns the width of the image.
@@ -67,18 +67,18 @@ class ContiguousImageView {
   // PixelFormat pixel_format_;
 };
 
-// Convert a ContiguousImageView into an ImageRowView.
+// Convert a ContinuousImageView into an ImageRowView.
 // \param image - input image.
 // \return an ImageRowView referring to the same data as image; the number of
 //         elements in the returned view equals image.area().
 template<class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable> flatten(
-    ContiguousImageView<PixelFormat, Mutable> image) {
+    ContinuousImageView<PixelFormat, Mutable> image) {
   return ImageRowView<PixelFormat, Mutable>(image.data(), image.area());
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr ContiguousImageView<PixelFormat, Mutable>::ContiguousImageView(
+constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(
     unsigned int height, unsigned int width, gsl::span<byte_type> data)
     : data_(data.data()), height_(height), width_(width) {
   Expects(data.size() == height * width * PixelFormat::kBytesPerPixel);
@@ -86,41 +86,41 @@ constexpr ContiguousImageView<PixelFormat, Mutable>::ContiguousImageView(
 
 template <class PixelFormat, bool Mutable>
 template <class Enable>
-constexpr ContiguousImageView<PixelFormat, Mutable>::ContiguousImageView(
-    ContiguousImageView<PixelFormat, !Mutable> image)
-    : ContiguousImageView(image.height(), image.width(), image.data()) {}
+constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(
+    ContinuousImageView<PixelFormat, !Mutable> image)
+    : ContinuousImageView(image.height(), image.width(), image.data()) {}
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ContiguousImageView<PixelFormat, Mutable>::height()
+constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::height()
     const {
   return height_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ContiguousImageView<PixelFormat, Mutable>::width()
+constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::width()
     const {
   return width_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ContiguousImageView<PixelFormat, Mutable>::area() const {
+constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::area() const {
   return height_ * width_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ContiguousImageView<PixelFormat, Mutable>::data() const
+constexpr auto ContinuousImageView<PixelFormat, Mutable>::data() const
     -> gsl::span<byte_type> {
   return gsl::span<byte_type>(data_, size_bytes());
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr std::size_t ContiguousImageView<PixelFormat, Mutable>::size_bytes()
+constexpr std::size_t ContinuousImageView<PixelFormat, Mutable>::size_bytes()
     const {
   return static_cast<std::size_t>(area()) * PixelFormat::kBytesPerPixel;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ContiguousImageView<PixelFormat, Mutable>::getPixelData(
+constexpr auto ContinuousImageView<PixelFormat, Mutable>::getPixelData(
     unsigned int y, unsigned int x) const
     -> gsl::span<byte_type, PixelFormat::kBytesPerPixel> {
   Expects(y < height_);
@@ -132,7 +132,7 @@ constexpr auto ContiguousImageView<PixelFormat, Mutable>::getPixelData(
 
 template <class PixelFormat, bool Mutable>
 constexpr typename PixelFormat::color_type
-ContiguousImageView<PixelFormat, Mutable>::operator()(unsigned int y,
+ContinuousImageView<PixelFormat, Mutable>::operator()(unsigned int y,
                                                       unsigned int x) const {
   const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data =
       getPixelData(y, x);
@@ -140,7 +140,7 @@ ContiguousImageView<PixelFormat, Mutable>::operator()(unsigned int y,
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr void ContiguousImageView<PixelFormat, Mutable>::setPixel(
+constexpr void ContinuousImageView<PixelFormat, Mutable>::setPixel(
     unsigned int y, unsigned int x, const color_type& color) const {
   static_assert(Mutable, "setPixel() can only be called for mutable views.");
   const gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data =
@@ -150,7 +150,7 @@ constexpr void ContiguousImageView<PixelFormat, Mutable>::setPixel(
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable>
-ContiguousImageView<PixelFormat, Mutable>::row(unsigned int y) const {
+ContinuousImageView<PixelFormat, Mutable>::row(unsigned int y) const {
   Expects(y < height_);
   const std::size_t bytes_per_row =
       static_cast<std::size_t>(width_) * PixelFormat::kBytesPerPixel;

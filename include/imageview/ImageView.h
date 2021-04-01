@@ -1,6 +1,6 @@
 #pragma once
 
-#include <imageview/ContiguousImageView.h>
+#include <imageview/ContinuousImageView.h>
 
 #include <gsl/span>
 
@@ -30,10 +30,10 @@ class ImageView {
   template <class Enable = std::enable_if_t<!Mutable>>
   constexpr ImageView(ImageView<PixelFormat, !Mutable> other);
 
-  constexpr ImageView(ContiguousImageView<PixelFormat, Mutable> image);
+  constexpr ImageView(ContinuousImageView<PixelFormat, Mutable> image);
   // Construct a read-only view from a mutable contiguous view.
   template<class Enable = std::enable_if_t<!Mutable>>
-  constexpr ImageView(ContiguousImageView<PixelFormat, !Mutable> image);
+  constexpr ImageView(ContinuousImageView<PixelFormat, !Mutable> image);
 
   // Return the height of the image
   constexpr unsigned int height() const;
@@ -79,14 +79,14 @@ constexpr ImageView<PixelFormat, Mutable>::ImageView(
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageView<PixelFormat, Mutable>::ImageView(
-    ContiguousImageView<PixelFormat, Mutable> image)
+    ContinuousImageView<PixelFormat, Mutable> image)
     : ImageView(image.height(), image.width(), image.data(), image.width()) {}
 
 template <class PixelFormat, bool Mutable>
 template <class Enable>
 constexpr ImageView<PixelFormat, Mutable>::ImageView(
-    ContiguousImageView<PixelFormat, !Mutable> image)
-    : ImageView(ContiguousImageView<PixelFormat, Mutable>(image)) {}
+    ContinuousImageView<PixelFormat, !Mutable> image)
+    : ImageView(ContinuousImageView<PixelFormat, Mutable>(image)) {}
 
 template <class PixelFormat, bool Mutable>
 constexpr unsigned int ImageView<PixelFormat, Mutable>::height() const {
