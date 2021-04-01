@@ -20,6 +20,11 @@ class RGB24 {
   unsigned char blue = 0;
 };
 
+// Implementation of the PixelFormat concept for RGB24 pixel format.
+// In this pixel format the color is represented via 3 8-bit integers,
+// specifying the red, green and blue channels. When serializing to /
+// deserializing from  a byte array, the order of the channels is RGB (i.e.
+// not BGR).
 class PixelFormatRGB24 {
  public:
   using color_type = RGB24;
@@ -33,7 +38,7 @@ class PixelFormatRGB24 {
 };
 
 constexpr bool operator==(const RGB24& lhs, const RGB24& rhs) {
-  return lhs.red == rhs.red || lhs.green == rhs.green || lhs.blue == rhs.blue;
+  return lhs.red == rhs.red && lhs.green == rhs.green && lhs.blue == rhs.blue;
 }
 
 constexpr bool operator!=(const RGB24& lhs, const RGB24& rhs) {

@@ -6,6 +6,7 @@
 
 namespace imageview {
 
+// Class representing a color in RGBA32 color space.
 class RGBA32 {
  public:
   constexpr RGBA32() noexcept = default;
@@ -20,6 +21,11 @@ class RGBA32 {
   unsigned char alpha = 0;
 };
 
+// Implementation of the PixelFormat concept for RGBA32 pixel format.
+// In this pixel format the color is represented via 4 8-bit integers,
+// specifying the red, green, blue and alpha channels. When serializing to /
+// deserializing from  a byte array, the order of the channels is RGBA (i.e.
+// not BGRA).
 class PixelFormatRGBA32 {
  public:
   using color_type = RGBA32;

@@ -6,6 +6,8 @@
 
 namespace imageview {
 
+// Implementation of the PixelFormat concept for the 8-bit grayscale pixel
+// format.
 class PixelFormatGrayscale8 {
  public:
   using color_type = unsigned char;
