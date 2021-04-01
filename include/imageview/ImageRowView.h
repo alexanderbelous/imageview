@@ -2,8 +2,8 @@
 
 #include <imageview/IsPixelFormat.h>
 
+#include <gsl/assert>
 #include <gsl/span>
-#include <gsl/gsl_assert>
 
 #include <cstddef>
 #include <stdexcept>

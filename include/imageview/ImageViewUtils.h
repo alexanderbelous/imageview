@@ -2,7 +2,7 @@
 
 #include <imageview/ImageView.h>
 
-#include <gsl/gsl_assert>
+#include <gsl/assert>
 
 namespace imageview {
 
