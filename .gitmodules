@@ -1,0 +1,6 @@
+[submodule "thirdparty/gsl"]
+	path = thirdparty/gsl
+	url = https://github.com/microsoft/GSL
+[submodule "thirdparty/googletest"]
+	path = thirdparty/googletest
+	url = https://github.com/google/googletest
