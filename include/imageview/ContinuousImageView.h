@@ -12,6 +12,24 @@
 namespace imageview {
 
 // Non-owning view into a bitmap image with the specified pixel format.
+//
+// \param PixelFormat - specifies how colors are stored in the bitmap.
+//        ContinuousImageView only supports images with fixed color depth (bits
+//        per pixel). PixelFormat should satisfy IsPixelFormat trait, i.e. be
+//        like
+//          class MyPixelFormat {
+//           public:
+//            using color_type = MyColor;
+//            static constexpr int kBytesPerPixel = N;
+//            static color_type read(
+//                gsl::span<const std::byte, kBytesPerPixel> pixel_data);
+//            static void write(const color_type& color,
+//                gsl::span<std::byte, kBytesPerPixel> pixel_data);
+//          };
+// \param Mutable - if true, ContinuousImageView provides write access to the
+//        bitmap (naturally, this requires that ContinuousImageView is
+//        constructed from a non-const pointer to the data). Otherwise, only
+//        read-only access is provided.
 template <class PixelFormat, bool Mutable = false>
 class ContinuousImageView {
  public:
@@ -51,6 +69,7 @@ class ContinuousImageView {
   constexpr color_type operator()(unsigned int y, unsigned int x) const;
   // Assign the given color to the specified pixel.
   // This function fails at compile time if Mutable is false.
+  // TODO: don't provide this function for immutable views at all.
   constexpr void setPixel(unsigned int y, unsigned int x,
                           const color_type& color) const;
   // Returns a non-owning view into the specified row of the image.
