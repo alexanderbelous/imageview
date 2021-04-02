@@ -115,7 +115,7 @@ class ContinuousImageView {
 //         elements in the returned view equals image.area().
 template <class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable> flatten(ContinuousImageView<PixelFormat, Mutable> image) {
-  return ImageRowView<PixelFormat, Mutable>(image.data(), image.area());
+  return ImageRowView<PixelFormat, Mutable>(image.data(), image.area(), image.pixelFormat());
 }
 
 template <class PixelFormat, bool Mutable>

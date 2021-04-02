@@ -17,7 +17,7 @@ ImageView<PixelFormat, Mutable> crop(ImageView<PixelFormat, Mutable> image, unsi
   const std::size_t new_data_size =
       (num_rows == 0) ? 0 : ((num_rows - 1) * image.stride() + num_columns) * PixelFormat::kBytesPerPixel;
   const auto data_new = image.data().subspan(data_offset, new_data_size);
-  return ImageView<PixelFormat>(num_rows, num_columns, data_new, image.stride());
+  return ImageView<PixelFormat>(num_rows, num_columns, image.stride(), data_new, image.pixelFormat());
 }
 
 }  // namespace imageview

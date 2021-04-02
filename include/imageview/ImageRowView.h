@@ -1,6 +1,7 @@
 #pragma once
 
 #include <imageview/IsPixelFormat.h>
+#include <imageview/internal/ImageViewStorage.h>
 
 #include <gsl/assert>
 #include <gsl/span>
@@ -21,17 +22,25 @@ class ImageRowView {
   constexpr ImageRowView() = default;
 
   constexpr ImageRowView(gsl::span<byte_type> data, unsigned int width);
+
+  constexpr ImageRowView(gsl::span<byte_type> data, unsigned int width, const PixelFormat& pixel_format);
+
+  constexpr ImageRowView(gsl::span<byte_type> data, unsigned int width, PixelFormat&& pixel_format);
+
   // Construct a read-only view from a mutable view.
   template <class Enable = std::enable_if_t<!Mutable>>
   constexpr ImageRowView(ImageRowView<PixelFormat, !Mutable> row_view);
 
-  constexpr gsl::span<byte_type> data() const;
+  // Returns the pixel format used by this image.
+  constexpr const PixelFormat& pixelFormat() const noexcept;
 
-  constexpr int size() const;
+  constexpr gsl::span<byte_type> data() const noexcept;
 
-  constexpr bool empty() const;
+  constexpr int size() const noexcept;
 
-  constexpr std::size_t size_bytes() const;
+  constexpr bool empty() const noexcept;
+
+  constexpr std::size_t size_bytes() const noexcept;
 
   constexpr color_type operator[](std::size_t index) const;
 
@@ -42,45 +51,64 @@ class ImageRowView {
  private:
   constexpr gsl::span<byte_type, PixelFormat::kBytesPerPixel> getPixelData(std::size_t index) const;
 
-  byte_type* data_ = nullptr;
+  detail::ImageViewStorage<PixelFormat, Mutable> storage_;
   unsigned int width_ = 0;
 };
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(gsl::span<byte_type> data, unsigned int width)
-    : data_(data.data()), width_(width) {
+    : storage_(data.data()), width_(width) {
+  Expects(data.size() == width * PixelFormat::kBytesPerPixel);
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(gsl::span<byte_type> data, unsigned int width,
+                                                           const PixelFormat& pixel_format)
+    : storage_(data.data(), pixel_format), width_(width) {
+  Expects(data.size() == width * PixelFormat::kBytesPerPixel);
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(gsl::span<byte_type> data, unsigned int width,
+                                                           PixelFormat&& pixel_format)
+    : storage_(data.data(), std::move(pixel_format)), width_(width) {
   Expects(data.size() == width * PixelFormat::kBytesPerPixel);
 }
 
 template <class PixelFormat, bool Mutable>
 template <class Enable>
 constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(ImageRowView<PixelFormat, !Mutable> row_view)
-    : ImageRowView(row_view.data(), row_view.size()) {}
+    : ImageRowView(row_view.data(), row_view.size(), row_view.pixelFormat()) {}
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::data() const -> gsl::span<byte_type> {
-  return gsl::span<byte_type>(data_, size_bytes());
+constexpr const PixelFormat& ImageRowView<PixelFormat, Mutable>::pixelFormat() const noexcept {
+  return storage_.pixelFormat();
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr int ImageRowView<PixelFormat, Mutable>::size() const {
+constexpr auto ImageRowView<PixelFormat, Mutable>::data() const noexcept -> gsl::span<byte_type> {
+  return gsl::span<byte_type>(storage_.data(), size_bytes());
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr int ImageRowView<PixelFormat, Mutable>::size() const noexcept {
   return width_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr bool ImageRowView<PixelFormat, Mutable>::empty() const {
+constexpr bool ImageRowView<PixelFormat, Mutable>::empty() const noexcept {
   return width_ == 0;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr std::size_t ImageRowView<PixelFormat, Mutable>::size_bytes() const {
+constexpr std::size_t ImageRowView<PixelFormat, Mutable>::size_bytes() const noexcept {
   return static_cast<std::size_t>(width_) * PixelFormat::kBytesPerPixel;
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr auto ImageRowView<PixelFormat, Mutable>::getPixelData(std::size_t index) const
     -> gsl::span<byte_type, PixelFormat::kBytesPerPixel> {
-  return gsl::span<byte_type, PixelFormat::kBytesPerPixel>(data_ + index * PixelFormat::kBytesPerPixel,
+  return gsl::span<byte_type, PixelFormat::kBytesPerPixel>(storage_.data() + index * PixelFormat::kBytesPerPixel,
                                                            PixelFormat::kBytesPerPixel);
 }
 

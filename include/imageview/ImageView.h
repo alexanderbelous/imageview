@@ -1,6 +1,7 @@
 #pragma once
 
 #include <imageview/ContinuousImageView.h>
+#include <imageview/internal/ImageViewStorage.h>
 
 #include <gsl/span>
 
@@ -18,12 +19,25 @@ class ImageView {
 
   // Construct an empty view.
   constexpr ImageView() = default;
+
   // Construct a view into an image.
   // \param height - height of the image.
   // \param width - width of the image.
-  // \param data - bitmap data.
   // \param stride -
-  constexpr ImageView(unsigned int height, unsigned int width, gsl::span<byte_type> data, unsigned int stride);
+  // \param data - bitmap data.
+  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, gsl::span<byte_type> data);
+
+  // Construct a view into an image.
+  // \param height - height of the image.
+  // \param width - width of the image.
+  // \param stride -
+  // \param data - bitmap data.
+  // \param pixel_format - PixelFormat instance to use.
+  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, gsl::span<byte_type> data,
+                      const PixelFormat& pixel_format);
+  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, gsl::span<byte_type> data,
+                      PixelFormat&& pixel_format);
+
   // Construct a read-only view from a mutable view.
   template <class Enable = std::enable_if_t<!Mutable>>
   constexpr ImageView(ImageView<PixelFormat, !Mutable> other);
@@ -34,31 +48,52 @@ class ImageView {
   constexpr ImageView(ContinuousImageView<PixelFormat, !Mutable> image);
 
   // Return the height of the image
-  constexpr unsigned int height() const;
+  constexpr unsigned int height() const noexcept;
 
-  constexpr unsigned int width() const;
+  constexpr unsigned int width() const noexcept;
 
-  constexpr unsigned int stride() const;
+  constexpr unsigned int stride() const noexcept;
 
-  constexpr unsigned int area() const;
+  constexpr unsigned int area() const noexcept;
 
-  constexpr gsl::span<byte_type> data() const;
+  // Returns the pixel format used by this image.
+  constexpr const PixelFormat& pixelFormat() const noexcept;
+
+  constexpr gsl::span<byte_type> data() const noexcept;
 
   constexpr color_type operator()(unsigned int y, unsigned int x) const;
 
   constexpr ImageRowView<PixelFormat, Mutable> row(unsigned int y) const;
 
  private:
-  byte_type* data_ = nullptr;
+  detail::ImageViewStorage<PixelFormat, Mutable> storage_;
   unsigned int height_ = 0;
   unsigned int width_ = 0;
   unsigned int stride_ = 0;
 };
 
 template <class PixelFormat, bool Mutable>
-constexpr ImageView<PixelFormat, Mutable>::ImageView(unsigned int height, unsigned int width, gsl::span<byte_type> data,
-                                                     unsigned int stride)
-    : data_(data.data()), height_(height), width_(width), stride_(stride) {
+constexpr ImageView<PixelFormat, Mutable>::ImageView(unsigned int height, unsigned int width, unsigned int stride,
+                                                     gsl::span<byte_type> data)
+    : storage_(data.data()), height_(height), width_(width), stride_(stride) {
+  Expects(width <= stride);
+  const std::size_t expected_size = (height == 0) ? 0 : ((height - 1) * stride + width) * PixelFormat::kBytesPerPixel;
+  Expects(data.size() == expected_size);
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr ImageView<PixelFormat, Mutable>::ImageView(unsigned int height, unsigned int width, unsigned int stride,
+                                                     gsl::span<byte_type> data, const PixelFormat& pixel_format)
+    : storage_(data.data(), pixel_format), height_(height), width_(width), stride_(stride) {
+  Expects(width <= stride);
+  const std::size_t expected_size = (height == 0) ? 0 : ((height - 1) * stride + width) * PixelFormat::kBytesPerPixel;
+  Expects(data.size() == expected_size);
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr ImageView<PixelFormat, Mutable>::ImageView(unsigned int height, unsigned int width, unsigned int stride,
+                                                     gsl::span<byte_type> data, PixelFormat&& pixel_format)
+    : storage_(data.data(), std::move(pixel_format)), height_(height), width_(width), stride_(stride) {
   Expects(width <= stride);
   const std::size_t expected_size = (height == 0) ? 0 : ((height - 1) * stride + width) * PixelFormat::kBytesPerPixel;
   Expects(data.size() == expected_size);
@@ -67,11 +102,11 @@ constexpr ImageView<PixelFormat, Mutable>::ImageView(unsigned int height, unsign
 template <class PixelFormat, bool Mutable>
 template <class Enable>
 constexpr ImageView<PixelFormat, Mutable>::ImageView(ImageView<PixelFormat, !Mutable> other)
-    : ImageView(other.height(), other.width(), other.data(), other.stride()) {}
+    : ImageView(other.height(), other.width(), other.stride(), other.data(), other.pixelFormat()) {}
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageView<PixelFormat, Mutable>::ImageView(ContinuousImageView<PixelFormat, Mutable> image)
-    : ImageView(image.height(), image.width(), image.data(), image.width()) {}
+    : ImageView(image.height(), image.width(), image.width(), image.data()) {}
 
 template <class PixelFormat, bool Mutable>
 template <class Enable>
@@ -79,29 +114,34 @@ constexpr ImageView<PixelFormat, Mutable>::ImageView(ContinuousImageView<PixelFo
     : ImageView(ContinuousImageView<PixelFormat, Mutable>(image)) {}
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ImageView<PixelFormat, Mutable>::height() const {
+constexpr unsigned int ImageView<PixelFormat, Mutable>::height() const noexcept {
   return height_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ImageView<PixelFormat, Mutable>::width() const {
+constexpr unsigned int ImageView<PixelFormat, Mutable>::width() const noexcept {
   return width_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ImageView<PixelFormat, Mutable>::stride() const {
+constexpr unsigned int ImageView<PixelFormat, Mutable>::stride() const noexcept {
   return stride_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ImageView<PixelFormat, Mutable>::area() const {
+constexpr unsigned int ImageView<PixelFormat, Mutable>::area() const noexcept {
   return height_ * width_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageView<PixelFormat, Mutable>::data() const -> gsl::span<byte_type> {
+constexpr const PixelFormat& ImageView<PixelFormat, Mutable>::pixelFormat() const noexcept {
+  return storage_.pixelFormat();
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr auto ImageView<PixelFormat, Mutable>::data() const noexcept -> gsl::span<byte_type> {
   const std::size_t data_size = (height_ == 0) ? 0 : ((height_ - 1) * stride_ + width_) * PixelFormat::kBytesPerPixel;
-  return gsl::span<byte_type>(data_, data_size);
+  return gsl::span<byte_type>(storage_.data(), data_size);
 }
 
 template <class PixelFormat, bool Mutable>
@@ -110,14 +150,14 @@ constexpr typename PixelFormat::color_type ImageView<PixelFormat, Mutable>::oper
   Expects(y < height_);
   Expects(x < width_);
   const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data(
-      data_ + (y * stride_ + x) * PixelFormat::kBytesPerPixel, PixelFormat::kBytesPerPixel);
+      storage_.data() + (y * stride_ + x) * PixelFormat::kBytesPerPixel, PixelFormat::kBytesPerPixel);
   return PixelFormat::read(pixel_data);
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable> ImageView<PixelFormat, Mutable>::row(unsigned int y) const {
   Expects(y < height_);
-  const gsl::span<byte_type> row_data(data_ + y * stride_ * PixelFormat::kBytesPerPixel,
+  const gsl::span<byte_type> row_data(storage_.data() + y * stride_ * PixelFormat::kBytesPerPixel,
                                       width_ * PixelFormat::kBytesPerPixel);
   return ImageRowView<PixelFormat>(row_data, width_);
 }
