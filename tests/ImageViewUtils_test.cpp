@@ -47,11 +47,12 @@ TEST(cropImageView, CropContinuous) {
   constexpr unsigned int kNewHeight = 3;
   constexpr unsigned int kNewWidth = 2;
   constexpr ImageView<PixelFormatRGB24> result = crop(image, 1, 1, kNewHeight, kNewWidth);
+  constexpr std::ptrdiff_t kExpectedOffset = (kFirstRow * kStride + kFirstColumn) * PixelFormatRGB24::kBytesPerPixel;
+  constexpr std::size_t kExpectedSize = ((kNewHeight - 1) * kStride + kNewWidth) * PixelFormatRGB24::kBytesPerPixel;
   static_assert(result.height() == kNewHeight, "Should be 3.");
   static_assert(result.width() == kNewWidth, "Should be 2.");
   static_assert(result.stride() == image.stride(), "Should have the same stride as the original image.");
-  static_assert(!result.data().empty(), "Should not be empty.");
-  constexpr std::ptrdiff_t kExpectedOffset = (kFirstRow * kStride + kFirstColumn) * PixelFormatRGB24::kBytesPerPixel;
+  static_assert(result.data().size() == kExpectedSize, "Should be 30 bytes.");
   static_assert(result.data().data() == kData.data() + kExpectedOffset, "data() should point to the element (1, 1) in the original image.");
 }
 
@@ -74,11 +75,12 @@ TEST(cropImageView, CropStrided) {
   constexpr unsigned int kNewHeight = 3;
   constexpr unsigned int kNewWidth = 2;
   constexpr ImageView<PixelFormatRGB24> result = crop(image, 1, 1, kNewHeight, kNewWidth);
+  constexpr std::ptrdiff_t kExpectedOffset = (kFirstRow * kStride + kFirstColumn) * PixelFormatRGB24::kBytesPerPixel;
+  constexpr std::size_t kExpectedSize = ((kNewHeight - 1) * kStride + kNewWidth) * PixelFormatRGB24::kBytesPerPixel;
   static_assert(result.height() == kNewHeight, "Should be 3.");
   static_assert(result.width() == kNewWidth, "Should be 2.");
   static_assert(result.stride() == image.stride(), "Should have the same stride as the original image.");
-  static_assert(!result.data().empty(), "Should not be empty.");
-  constexpr std::ptrdiff_t kExpectedOffset = (kFirstRow * kStride + kFirstColumn) * PixelFormatRGB24::kBytesPerPixel;
+  static_assert(result.data().size() == kExpectedSize, "Should be 42 bytes.");
   static_assert(result.data().data() == kData.data() + kExpectedOffset,
                 "data() should point to the element (1, 1) in the original image.");
 }
