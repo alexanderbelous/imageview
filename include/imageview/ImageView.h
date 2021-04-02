@@ -151,7 +151,7 @@ constexpr typename PixelFormat::color_type ImageView<PixelFormat, Mutable>::oper
   Expects(x < width_);
   const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data(
       storage_.data() + (y * stride_ + x) * PixelFormat::kBytesPerPixel, PixelFormat::kBytesPerPixel);
-  return PixelFormat::read(pixel_data);
+  return storage_.pixelFormat().read(pixel_data);
 }
 
 template <class PixelFormat, bool Mutable>
@@ -159,7 +159,7 @@ constexpr ImageRowView<PixelFormat, Mutable> ImageView<PixelFormat, Mutable>::ro
   Expects(y < height_);
   const gsl::span<byte_type> row_data(storage_.data() + y * stride_ * PixelFormat::kBytesPerPixel,
                                       width_ * PixelFormat::kBytesPerPixel);
-  return ImageRowView<PixelFormat>(row_data, width_);
+  return ImageRowView<PixelFormat>(row_data, width_, pixelFormat());
 }
 
 }  // namespace imageview

@@ -188,7 +188,7 @@ template <class PixelFormat, bool Mutable>
 constexpr typename PixelFormat::color_type ContinuousImageView<PixelFormat, Mutable>::operator()(unsigned int y,
                                                                                                  unsigned int x) const {
   const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
-  return PixelFormat::read(pixel_data);
+  return storage_.pixelFormat().read(pixel_data);
 }
 
 template <class PixelFormat, bool Mutable>
@@ -196,7 +196,7 @@ constexpr void ContinuousImageView<PixelFormat, Mutable>::setPixel(unsigned int 
                                                                    const color_type& color) const {
   static_assert(Mutable, "setPixel() can only be called for mutable views.");
   const gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
-  PixelFormat::write(color, pixel_data);
+  storage_.pixelFormat().write(color, pixel_data);
 }
 
 template <class PixelFormat, bool Mutable>
@@ -204,7 +204,7 @@ constexpr ImageRowView<PixelFormat, Mutable> ContinuousImageView<PixelFormat, Mu
   Expects(y < height_);
   const std::size_t bytes_per_row = static_cast<std::size_t>(width_) * PixelFormat::kBytesPerPixel;
   const gsl::span<byte_type> row_data(storage_.data() + y * bytes_per_row, bytes_per_row);
-  return ImageRowView<PixelFormat, Mutable>(row_data, width_);
+  return ImageRowView<PixelFormat, Mutable>(row_data, width_, pixelFormat());
 }
 
 }  // namespace imageview

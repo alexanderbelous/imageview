@@ -30,17 +30,17 @@ class PixelFormatRGBA32 {
   using color_type = RGBA32;
   static constexpr int kBytesPerPixel = 4;
 
-  constexpr static color_type read(gsl::span<const std::byte, kBytesPerPixel> data);
+  constexpr color_type read(gsl::span<const std::byte, kBytesPerPixel> data) const;
 
-  constexpr static void write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data);
+  constexpr void write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data) const;
 };
 
-constexpr PixelFormatRGBA32::color_type PixelFormatRGBA32::read(gsl::span<const std::byte, kBytesPerPixel> data) {
+constexpr PixelFormatRGBA32::color_type PixelFormatRGBA32::read(gsl::span<const std::byte, kBytesPerPixel> data) const {
   return color_type(static_cast<unsigned char>(data[0]), static_cast<unsigned char>(data[1]),
                     static_cast<unsigned char>(data[2]), static_cast<unsigned char>(data[3]));
 }
 
-constexpr void PixelFormatRGBA32::write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data) {
+constexpr void PixelFormatRGBA32::write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data) const {
   data[0] = static_cast<std::byte>(color.red);
   data[1] = static_cast<std::byte>(color.green);
   data[2] = static_cast<std::byte>(color.blue);

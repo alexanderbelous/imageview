@@ -115,7 +115,7 @@ constexpr auto ImageRowView<PixelFormat, Mutable>::getPixelData(std::size_t inde
 template <class PixelFormat, bool Mutable>
 constexpr auto ImageRowView<PixelFormat, Mutable>::operator[](std::size_t index) const -> color_type {
   const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(index);
-  return PixelFormat::read(pixel_data);
+  return storage_.pixelFormat().read(pixel_data);
 }
 
 template <class PixelFormat, bool Mutable>
@@ -137,7 +137,7 @@ constexpr void ImageRowView<PixelFormat, Mutable>::setElement(std::size_t index,
         "range.");
   }
   const gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(index);
-  return PixelFormat::write(color, pixel_data);
+  return storage_.pixelFormat().write(color, pixel_data);
 }
 
 }  // namespace imageview

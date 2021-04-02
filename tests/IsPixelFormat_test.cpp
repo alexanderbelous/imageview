@@ -16,9 +16,9 @@ class PixelFormatRGB565 {
   using color_type = RGB565;
   static constexpr unsigned int kBytesPerPixel = 2;
 
-  static constexpr color_type read(gsl::span<const std::byte, 2> pixel_data);
+  constexpr color_type read(gsl::span<const std::byte, 2> pixel_data) const;
 
-  static constexpr void write(const color_type& color, gsl::span<std::byte, 2> pixel_data);
+  constexpr void write(const color_type& color, gsl::span<std::byte, 2> pixel_data) const;
 };
 static_assert(IsPixelFormat<PixelFormatRGB565>::value,
               "IsPixelFormat should be true for PixelFormatRGB565 - the class "
@@ -29,9 +29,9 @@ class NoColorType {
  public:
   static constexpr unsigned int kBytesPerPixel = 2;
 
-  static constexpr RGB565 read(gsl::span<const std::byte, 2> pixel_data);
+  constexpr RGB565 read(gsl::span<const std::byte, 2> pixel_data) const;
 
-  static constexpr void write(const RGB565& color, gsl::span<std::byte, 2> pixel_data);
+  constexpr void write(const RGB565& color, gsl::span<std::byte, 2> pixel_data) const;
 };
 static_assert(!IsPixelFormat<NoColorType>::value,
               "IsPixelFormat should be false for NoColorType - "
@@ -42,9 +42,9 @@ class NoKBytesPerPixel {
  public:
   using color_type = RGB565;
 
-  static constexpr color_type read(gsl::span<const std::byte, 2> pixel_data);
+  constexpr color_type read(gsl::span<const std::byte, 2> pixel_data) const;
 
-  static constexpr void write(const color_type& color, gsl::span<std::byte, 2> pixel_data);
+  constexpr void write(const color_type& color, gsl::span<std::byte, 2> pixel_data) const;
 };
 static_assert(!IsPixelFormat<NoKBytesPerPixel>::value,
               "IsPixelFormat should be false for NoKBytesPerPixel - the class "
@@ -56,9 +56,9 @@ class InvalidKBytesPerPixelType {
   using color_type = RGB565;
   static constexpr float kBytesPerPixel = 3.14f;
 
-  static constexpr color_type read(gsl::span<const std::byte> pixel_data);
+  constexpr color_type read(gsl::span<const std::byte> pixel_data) const;
 
-  static constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data);
+  constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data) const;
 };
 static_assert(!IsPixelFormat<InvalidKBytesPerPixelType>::value,
               "IsPixelFormat should be false for InvalidKBytesPerPixelType - "
@@ -70,9 +70,9 @@ class NonConstKBytesPerPixel {
   using color_type = RGB565;
   static int kBytesPerPixel;
 
-  static constexpr color_type read(gsl::span<const std::byte> pixel_data);
+  constexpr color_type read(gsl::span<const std::byte> pixel_data) const;
 
-  static constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data);
+  constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data) const;
 };
 int NonConstKBytesPerPixel::kBytesPerPixel = 2;
 static_assert(!IsPixelFormat<NonConstKBytesPerPixel>::value,
@@ -85,9 +85,9 @@ class NonStaticKBytesPerPixel {
   using color_type = RGB565;
   const int kBytesPerPixel;
 
-  static constexpr color_type read(gsl::span<const std::byte> pixel_data);
+  constexpr color_type read(gsl::span<const std::byte> pixel_data) const;
 
-  static constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data);
+  constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data) const;
 };
 static_assert(!IsPixelFormat<NonStaticKBytesPerPixel>::value,
               "IsPixelFormat should be false for NonStaticKBytesPerPixel - "
