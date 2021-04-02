@@ -83,7 +83,7 @@ class ContinuousImageView {
   // Returns the width of the image.
   constexpr unsigned int width() const noexcept;
   // Returns the total number of pixels.
-  constexpr unsigned int area() const noexcept;
+  constexpr std::size_t area() const noexcept;
   // Returns the pixel format used by this image.
   constexpr const PixelFormat& pixelFormat() const noexcept;
   // Returns the pointer to the bitmap data.
@@ -129,13 +129,17 @@ template <class PixelFormat, bool Mutable>
 constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(unsigned int height, unsigned int width,
                                                                          gsl::span<byte_type> data,
                                                                          const PixelFormat& pixel_format)
-    : storage_(data.data(), pixel_format), height_(height), width_(width) {}
+    : storage_(data.data(), pixel_format), height_(height), width_(width) {
+  Expects(data.size() == height * width * PixelFormat::kBytesPerPixel);
+}
 
 template <class PixelFormat, bool Mutable>
 constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(unsigned int height, unsigned int width,
                                                                          gsl::span<byte_type> data,
                                                                          PixelFormat&& pixel_format)
-    : storage_(data.data(), std::move(pixel_format)), height_(height), width_(width) {}
+    : storage_(data.data(), std::move(pixel_format)), height_(height), width_(width) {
+  Expects(data.size() == height * width * PixelFormat::kBytesPerPixel);
+}
 
 template <class PixelFormat, bool Mutable>
 template <class Enable>
@@ -154,8 +158,8 @@ constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::width() const 
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::area() const noexcept {
-  return height_ * width_;
+constexpr std::size_t ContinuousImageView<PixelFormat, Mutable>::area() const noexcept {
+  return static_cast<std::size_t>(height_) * width_;
 }
 
 template <class PixelFormat, bool Mutable>
@@ -170,7 +174,7 @@ constexpr auto ContinuousImageView<PixelFormat, Mutable>::data() const noexcept 
 
 template <class PixelFormat, bool Mutable>
 constexpr std::size_t ContinuousImageView<PixelFormat, Mutable>::size_bytes() const noexcept {
-  return static_cast<std::size_t>(area()) * PixelFormat::kBytesPerPixel;
+  return area() * PixelFormat::kBytesPerPixel;
 }
 
 template <class PixelFormat, bool Mutable>

@@ -18,7 +18,8 @@ class ImageView {
   using color_type = typename PixelFormat::color_type;
 
   // Construct an empty view.
-  constexpr ImageView() = default;
+  template <class Enable = std::enable_if_t<std::is_default_constructible_v<PixelFormat>>>
+  constexpr ImageView() noexcept(noexcept(std::is_nothrow_default_constructible_v<PixelFormat>)) {}
 
   // Construct a view into an image.
   // \param height - height of the image.
