@@ -10,12 +10,9 @@ namespace {
 
 TEST(ImageView, DefaultConstructor) {
   constexpr ImageView<PixelFormatRGB24> image;
-  static_assert(image.height() == 0,
-                "Default-constructed ImageView should have zero height.");
-  static_assert(image.width() == 0,
-                "Default-constructed ImageView should have zero width.");
-  static_assert(image.data().empty(),
-                "Default-constructed ImageView should have empty data.");
+  static_assert(image.height() == 0, "Default-constructed ImageView should have zero height.");
+  static_assert(image.width() == 0, "Default-constructed ImageView should have zero width.");
+  static_assert(image.data().empty(), "Default-constructed ImageView should have empty data.");
 }
 
 TEST(ImageView, RawParamsConstructor) {
@@ -28,19 +25,15 @@ TEST(ImageView, RawParamsConstructor) {
   static_assert(image.height() == kHeight, "Height should equal kHeight.");
   static_assert(image.width() == kWidth, "Width should equal kWidth.");
   static_assert(image.stride() == kWidth, "Stride should equal kWidth.");
-  static_assert(image.data().size() == kDataSize,
-                "data() should return a span of kDataSize bytes.");
-  static_assert(image.data().data() == bitmap.data(),
-                "data() should refer to the input bitmap.");
+  static_assert(image.data().size() == kDataSize, "data() should return a span of kDataSize bytes.");
+  static_assert(image.data().data() == bitmap.data(), "data() should refer to the input bitmap.");
 }
 
 TEST(ImageView, ConstructReadOnlyFromMutable) {
   constexpr unsigned int kHeight = 3;
   constexpr unsigned int kWidth = 2;
-  std::array<std::byte, kHeight * kWidth * PixelFormatRGB24::kBytesPerPixel>
-      kData{};
-  const ImageView<PixelFormatRGB24, true> image_mutable(kHeight, kWidth, kData,
-                                                        kWidth);
+  std::array<std::byte, kHeight * kWidth * PixelFormatRGB24::kBytesPerPixel> kData{};
+  const ImageView<PixelFormatRGB24, true> image_mutable(kHeight, kWidth, kData, kWidth);
   const ImageView<PixelFormatRGB24> image_const(image_mutable);
   EXPECT_EQ(image_const.height(), image_mutable.height());
   EXPECT_EQ(image_const.width(), image_mutable.width());
@@ -50,11 +43,9 @@ TEST(ImageView, ConstructReadOnlyFromMutable) {
 }
 
 TEST(ImageView, ReadElement) {
-  static constexpr std::array<std::byte, 12> data{
-      std::byte{64}, std::byte{0}, std::byte{0},
-      std::byte{0}, std::byte{128}, std::byte{0},
-      std::byte{0}, std::byte{0}, std::byte{255},
-      std::byte{0}, std::byte{0}, std::byte{0}};
+  static constexpr std::array<std::byte, 12> data{std::byte{64},  std::byte{0}, std::byte{0}, std::byte{0},
+                                                  std::byte{128}, std::byte{0}, std::byte{0}, std::byte{0},
+                                                  std::byte{255}, std::byte{0}, std::byte{0}, std::byte{0}};
   constexpr ImageView<PixelFormatRGB24> image(2, 2, data, 2);
   static_assert(image(0, 0) == RGB24(64, 0, 0), "Should be {64, 0, 0}.");
   static_assert(image(0, 1) == RGB24(0, 128, 0), "Should be {0, 128, 0}.");

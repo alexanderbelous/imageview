@@ -35,8 +35,7 @@ class ContinuousImageView {
  public:
   static_assert(IsPixelFormat<PixelFormat>::value, "Not a PixelFormat.");
 
-  using byte_type =
-      std::conditional_t<Mutable, std::byte, const std::byte>;
+  using byte_type = std::conditional_t<Mutable, std::byte, const std::byte>;
   using color_type = typename PixelFormat::color_type;
 
   // Construct an empty view.
@@ -49,12 +48,10 @@ class ContinuousImageView {
   //          height * width * PixelFormat::kBytesPerPixel.
   //        Pixels are assumed to be stored contiguously, with each pixel
   //        occupying exactly PixelFormat::kBytesPerPixel.
-  constexpr ContinuousImageView(unsigned int height, unsigned int width,
-                                gsl::span<byte_type> data);
+  constexpr ContinuousImageView(unsigned int height, unsigned int width, gsl::span<byte_type> data);
   // Construct a read-only view from a mutable view.
   template <class Enable = std::enable_if_t<!Mutable>>
-  constexpr ContinuousImageView(
-      ContinuousImageView<PixelFormat, !Mutable> image);
+  constexpr ContinuousImageView(ContinuousImageView<PixelFormat, !Mutable> image);
   // Returns the height of the image.
   constexpr unsigned int height() const;
   // Returns the width of the image.
@@ -70,14 +67,12 @@ class ContinuousImageView {
   // Assign the given color to the specified pixel.
   // This function fails at compile time if Mutable is false.
   // TODO: don't provide this function for immutable views at all.
-  constexpr void setPixel(unsigned int y, unsigned int x,
-                          const color_type& color) const;
+  constexpr void setPixel(unsigned int y, unsigned int x, const color_type& color) const;
   // Returns a non-owning view into the specified row of the image.
   constexpr ImageRowView<PixelFormat, Mutable> row(unsigned int y) const;
 
  private:
-  constexpr gsl::span<byte_type, PixelFormat::kBytesPerPixel> getPixelData(
-      unsigned int y, unsigned int x) const;
+  constexpr gsl::span<byte_type, PixelFormat::kBytesPerPixel> getPixelData(unsigned int y, unsigned int x) const;
 
   byte_type* data_ = nullptr;
   unsigned int height_ = 0;
@@ -90,15 +85,14 @@ class ContinuousImageView {
 // \param image - input image.
 // \return an ImageRowView referring to the same data as image; the number of
 //         elements in the returned view equals image.area().
-template<class PixelFormat, bool Mutable>
-constexpr ImageRowView<PixelFormat, Mutable> flatten(
-    ContinuousImageView<PixelFormat, Mutable> image) {
+template <class PixelFormat, bool Mutable>
+constexpr ImageRowView<PixelFormat, Mutable> flatten(ContinuousImageView<PixelFormat, Mutable> image) {
   return ImageRowView<PixelFormat, Mutable>(image.data(), image.area());
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(
-    unsigned int height, unsigned int width, gsl::span<byte_type> data)
+constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(unsigned int height, unsigned int width,
+                                                                         gsl::span<byte_type> data)
     : data_(data.data()), height_(height), width_(width) {
   Expects(data.size() == height * width * PixelFormat::kBytesPerPixel);
 }
@@ -110,14 +104,12 @@ constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(
     : ContinuousImageView(image.height(), image.width(), image.data()) {}
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::height()
-    const {
+constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::height() const {
   return height_;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::width()
-    const {
+constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::width() const {
   return width_;
 }
 
@@ -127,52 +119,43 @@ constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::area() const {
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ContinuousImageView<PixelFormat, Mutable>::data() const
-    -> gsl::span<byte_type> {
+constexpr auto ContinuousImageView<PixelFormat, Mutable>::data() const -> gsl::span<byte_type> {
   return gsl::span<byte_type>(data_, size_bytes());
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr std::size_t ContinuousImageView<PixelFormat, Mutable>::size_bytes()
-    const {
+constexpr std::size_t ContinuousImageView<PixelFormat, Mutable>::size_bytes() const {
   return static_cast<std::size_t>(area()) * PixelFormat::kBytesPerPixel;
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ContinuousImageView<PixelFormat, Mutable>::getPixelData(
-    unsigned int y, unsigned int x) const
+constexpr auto ContinuousImageView<PixelFormat, Mutable>::getPixelData(unsigned int y, unsigned int x) const
     -> gsl::span<byte_type, PixelFormat::kBytesPerPixel> {
   Expects(y < height_);
   Expects(x < width_);
   const std::size_t offset = (y * width_ + x) * PixelFormat::kBytesPerPixel;
-  return gsl::span<byte_type, PixelFormat::kBytesPerPixel>(
-      data_ + offset, PixelFormat::kBytesPerPixel);
+  return gsl::span<byte_type, PixelFormat::kBytesPerPixel>(data_ + offset, PixelFormat::kBytesPerPixel);
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr typename PixelFormat::color_type
-ContinuousImageView<PixelFormat, Mutable>::operator()(unsigned int y,
-                                                      unsigned int x) const {
-  const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data =
-      getPixelData(y, x);
+constexpr typename PixelFormat::color_type ContinuousImageView<PixelFormat, Mutable>::operator()(unsigned int y,
+                                                                                                 unsigned int x) const {
+  const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
   return PixelFormat::read(pixel_data);
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr void ContinuousImageView<PixelFormat, Mutable>::setPixel(
-    unsigned int y, unsigned int x, const color_type& color) const {
+constexpr void ContinuousImageView<PixelFormat, Mutable>::setPixel(unsigned int y, unsigned int x,
+                                                                   const color_type& color) const {
   static_assert(Mutable, "setPixel() can only be called for mutable views.");
-  const gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data =
-      getPixelData(y, x);
+  const gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
   PixelFormat::write(color, pixel_data);
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr ImageRowView<PixelFormat, Mutable>
-ContinuousImageView<PixelFormat, Mutable>::row(unsigned int y) const {
+constexpr ImageRowView<PixelFormat, Mutable> ContinuousImageView<PixelFormat, Mutable>::row(unsigned int y) const {
   Expects(y < height_);
-  const std::size_t bytes_per_row =
-      static_cast<std::size_t>(width_) * PixelFormat::kBytesPerPixel;
+  const std::size_t bytes_per_row = static_cast<std::size_t>(width_) * PixelFormat::kBytesPerPixel;
   const gsl::span<byte_type> row_data(data_ + y * bytes_per_row, bytes_per_row);
   return ImageRowView<PixelFormat, Mutable>(row_data, width_);
 }

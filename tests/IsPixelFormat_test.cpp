@@ -18,8 +18,7 @@ class PixelFormatRGB565 {
 
   static constexpr color_type read(gsl::span<const std::byte, 2> pixel_data);
 
-  static constexpr void write(const color_type& color,
-                              gsl::span<std::byte, 2> pixel_data);
+  static constexpr void write(const color_type& color, gsl::span<std::byte, 2> pixel_data);
 };
 static_assert(IsPixelFormat<PixelFormatRGB565>::value,
               "IsPixelFormat should be true for PixelFormatRGB565 - the class "
@@ -32,8 +31,7 @@ class NoColorType {
 
   static constexpr RGB565 read(gsl::span<const std::byte, 2> pixel_data);
 
-  static constexpr void write(const RGB565& color,
-                              gsl::span<std::byte, 2> pixel_data);
+  static constexpr void write(const RGB565& color, gsl::span<std::byte, 2> pixel_data);
 };
 static_assert(!IsPixelFormat<NoColorType>::value,
               "IsPixelFormat should be false for NoColorType - "
@@ -46,8 +44,7 @@ class NoKBytesPerPixel {
 
   static constexpr color_type read(gsl::span<const std::byte, 2> pixel_data);
 
-  static constexpr void write(const color_type& color,
-                              gsl::span<std::byte, 2> pixel_data);
+  static constexpr void write(const color_type& color, gsl::span<std::byte, 2> pixel_data);
 };
 static_assert(!IsPixelFormat<NoKBytesPerPixel>::value,
               "IsPixelFormat should be false for NoKBytesPerPixel - the class "
@@ -61,13 +58,11 @@ class InvalidKBytesPerPixelType {
 
   static constexpr color_type read(gsl::span<const std::byte> pixel_data);
 
-  static constexpr void write(const color_type& color,
-                              gsl::span<std::byte> pixel_data);
+  static constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data);
 };
-static_assert(
-    !IsPixelFormat<InvalidKBytesPerPixelType>::value,
-    "IsPixelFormat should be false for InvalidKBytesPerPixelType - "
-    "its static member constant 'kBytesPerPixel' is not an integer.");
+static_assert(!IsPixelFormat<InvalidKBytesPerPixelType>::value,
+              "IsPixelFormat should be false for InvalidKBytesPerPixelType - "
+              "its static member constant 'kBytesPerPixel' is not an integer.");
 // }
 // TEST(IsPixelFormat, NonConstKBytesPerPixel) {
 class NonConstKBytesPerPixel {
@@ -77,8 +72,7 @@ class NonConstKBytesPerPixel {
 
   static constexpr color_type read(gsl::span<const std::byte> pixel_data);
 
-  static constexpr void write(const color_type& color,
-                              gsl::span<std::byte> pixel_data);
+  static constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data);
 };
 int NonConstKBytesPerPixel::kBytesPerPixel = 2;
 static_assert(!IsPixelFormat<NonConstKBytesPerPixel>::value,
@@ -93,14 +87,12 @@ class NonStaticKBytesPerPixel {
 
   static constexpr color_type read(gsl::span<const std::byte> pixel_data);
 
-  static constexpr void write(const color_type& color,
-                              gsl::span<std::byte> pixel_data);
+  static constexpr void write(const color_type& color, gsl::span<std::byte> pixel_data);
 };
 static_assert(!IsPixelFormat<NonStaticKBytesPerPixel>::value,
               "IsPixelFormat should be false for NonStaticKBytesPerPixel - "
               "its member 'kBytesPerPixel' is not static.");
 // }
-
 
 }  // namespace
 }  // namespace imageview
