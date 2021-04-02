@@ -22,10 +22,8 @@ namespace imageview {
 //           public:
 //            using color_type = MyColor;
 //            static constexpr int kBytesPerPixel = N;
-//            static color_type read(
-//                gsl::span<const std::byte, kBytesPerPixel> pixel_data);
-//            static void write(const color_type& color,
-//                gsl::span<std::byte, kBytesPerPixel> pixel_data);
+//            color_type read(gsl::span<const std::byte, kBytesPerPixel> pixel_data) const;
+//            void write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> pixel_data) const;
 //          };
 // \param Mutable - if true, ContinuousImageView provides write access to the
 //        bitmap (naturally, this requires that ContinuousImageView is
