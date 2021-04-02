@@ -7,8 +7,9 @@
 namespace imageview {
 
 template <class PixelFormat, bool Mutable>
-ImageView<PixelFormat, Mutable> crop(ImageView<PixelFormat, Mutable> image, unsigned int first_row,
-                                     unsigned int first_column, unsigned int num_rows, unsigned int num_columns) {
+constexpr ImageView<PixelFormat, Mutable> crop(ImageView<PixelFormat, Mutable> image, unsigned int first_row,
+                                               unsigned int first_column, unsigned int num_rows,
+                                               unsigned int num_columns) {
   Expects(first_row <= image.height());
   Expects(first_column <= image.width());
   Expects(first_row + num_rows <= image.height());
