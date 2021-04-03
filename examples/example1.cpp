@@ -43,7 +43,7 @@ int main() {
   // Replace green pixels with black.
   replaceColor(image, RGB24(0, 255, 0), RGB24(0, 0, 0));
   // Select a rectangular area within the image.
-  const auto subimage = crop(ImageView{image}, 10, 10, 50, 50);
+  const ImageView<PixelFormatRGB24> subimage = crop(image, 10, 10, 50, 50);
   // Compute the mean color within the selected area.
   const RGB24 mean_color = computeMeanColor(subimage);
 

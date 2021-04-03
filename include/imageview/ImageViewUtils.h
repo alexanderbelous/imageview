@@ -1,5 +1,6 @@
 #pragma once
 
+#include <imageview/ContinuousImageView.h>
 #include <imageview/ImageView.h>
 
 #include <gsl/assert>
@@ -19,6 +20,13 @@ constexpr ImageView<PixelFormat, Mutable> crop(ImageView<PixelFormat, Mutable> i
       (num_rows == 0) ? 0 : ((num_rows - 1) * image.stride() + num_columns) * PixelFormat::kBytesPerPixel;
   const auto data_new = image.data().subspan(data_offset, new_data_size);
   return ImageView<PixelFormat>(num_rows, num_columns, image.stride(), data_new, image.pixelFormat());
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr ImageView<PixelFormat, Mutable> crop(ContinuousImageView<PixelFormat, Mutable> image, unsigned int first_row,
+                                               unsigned int first_column, unsigned int num_rows,
+                                               unsigned int num_columns) {
+  return crop(ImageView<PixelFormat, Mutable>(image), first_column, first_column, num_rows, num_columns);
 }
 
 }  // namespace imageview

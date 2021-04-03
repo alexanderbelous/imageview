@@ -41,7 +41,7 @@ TEST(cropImageView, CropContinuous) {
   constexpr unsigned int kStride = kWidth;
   constexpr std::size_t kDataSize = kHeight * kWidth * PixelFormatRGB24::kBytesPerPixel;
   static constexpr std::array<std::byte, kDataSize> kData{};
-  constexpr ImageView<PixelFormatRGB24> image(kHeight, kWidth, kStride, kData);
+  constexpr ContinuousImageView<PixelFormatRGB24> image(kHeight, kWidth, kData);
   constexpr unsigned int kFirstRow = 1;
   constexpr unsigned int kFirstColumn = 1;
   constexpr unsigned int kNewHeight = 3;
@@ -51,7 +51,7 @@ TEST(cropImageView, CropContinuous) {
   constexpr std::size_t kExpectedSize = ((kNewHeight - 1) * kStride + kNewWidth) * PixelFormatRGB24::kBytesPerPixel;
   static_assert(result.height() == kNewHeight, "Should be 3.");
   static_assert(result.width() == kNewWidth, "Should be 2.");
-  static_assert(result.stride() == image.stride(), "Should have the same stride as the original image.");
+  static_assert(result.stride() == image.width(), "Stride should be equal to the width of the original image.");
   static_assert(result.data().size() == kExpectedSize, "Should be 30 bytes.");
   static_assert(result.data().data() == kData.data() + kExpectedOffset, "data() should point to the element (1, 1) in the original image.");
 }
