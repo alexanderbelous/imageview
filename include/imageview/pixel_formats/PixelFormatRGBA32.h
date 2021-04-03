@@ -35,6 +35,12 @@ class PixelFormatRGBA32 {
   constexpr void write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data) const;
 };
 
+constexpr bool operator==(const RGBA32& lhs, const RGBA32& rhs) {
+  return lhs.red == rhs.red && lhs.green == rhs.green && lhs.blue == rhs.blue && lhs.alpha == rhs.alpha;
+}
+
+constexpr bool operator!=(const RGBA32& lhs, const RGBA32& rhs) { return !(lhs == rhs); }
+
 constexpr PixelFormatRGBA32::color_type PixelFormatRGBA32::read(gsl::span<const std::byte, kBytesPerPixel> data) const {
   return color_type(static_cast<unsigned char>(data[0]), static_cast<unsigned char>(data[1]),
                     static_cast<unsigned char>(data[2]), static_cast<unsigned char>(data[3]));
