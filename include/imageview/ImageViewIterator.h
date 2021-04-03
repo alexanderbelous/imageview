@@ -10,7 +10,7 @@
 namespace imageview {
 namespace detail {
 
-template<class ColorType>
+template <class ColorType>
 class ArrowProxy {
  public:
   constexpr explicit ArrowProxy(const ColorType& color) noexcept(
@@ -50,6 +50,8 @@ class ImageViewIterator {
 
   constexpr pointer operator->() const;
 
+  constexpr reference operator[](std::ptrdiff_t index) const;
+
   constexpr ImageViewIterator& operator++() noexcept;
 
   constexpr ImageViewIterator operator++(int);
@@ -66,11 +68,19 @@ class ImageViewIterator {
 
   constexpr ImageViewIterator operator-(std::ptrdiff_t n) const;
 
-  constexpr bool operator==(ImageViewIterator other) const;
+  constexpr bool operator==(ImageViewIterator other) const noexcept;
 
-  constexpr bool operator!=(ImageViewIterator other) const;
+  constexpr bool operator!=(ImageViewIterator other) const noexcept;
 
-  constexpr std::ptrdiff_t operator-(ImageViewIterator other) const;
+  constexpr bool operator<(ImageViewIterator other) const noexcept;
+
+  constexpr bool operator<=(ImageViewIterator other) const noexcept;
+
+  constexpr bool operator>(ImageViewIterator other) const noexcept;
+
+  constexpr bool operator>=(ImageViewIterator other) const noexcept;
+
+  constexpr std::ptrdiff_t operator-(ImageViewIterator other) const noexcept;
 
  private:
   detail::ImageViewStorage<PixelFormat, false> storage_;
@@ -100,6 +110,13 @@ constexpr auto ImageViewIterator<PixelFormat>::operator*() const -> reference {
 template <class PixelFormat>
 constexpr auto ImageViewIterator<PixelFormat>::operator->() const -> pointer {
   return pointer(*this);
+}
+
+template <class PixelFormat>
+constexpr auto ImageViewIterator<PixelFormat>::operator[](std::ptrdiff_t index) const -> reference {
+  constexpr unsigned int kBytesPerPixel = PixelFormat::kBytesPerPixel;
+  const gsl::span<const std::byte, kBytesPerPixel> pixel_data(storage_.data_ + index * kBytesPerPixel, kBytesPerPixel);
+  return storage_.pixelFormat().read(pixel_data);
 }
 
 template <class PixelFormat>
@@ -151,7 +168,7 @@ constexpr ImageViewIterator<PixelFormat> ImageViewIterator<PixelFormat>::operato
 }
 
 template <class PixelFormat>
-constexpr bool ImageViewIterator<PixelFormat>::operator==(ImageViewIterator other) const {
+constexpr bool ImageViewIterator<PixelFormat>::operator==(ImageViewIterator other) const noexcept {
   // TODO: Shouldn't we also compare storage_.pixelFormat()?
   // Problem is, I don't want to require that PixelFormat is EqualityComparable.
   // A possible solution is to store PixelFormat by reference and compare the addresses.
@@ -166,16 +183,38 @@ constexpr bool ImageViewIterator<PixelFormat>::operator==(ImageViewIterator othe
   //     private PixelFormat {
   //     const std::byte* data;
   //   };
+  // UPD: actually, we don't have to compare pixel formats: comparison operators only need to work "in the domain of
+  // ==". Comparing 2 iterators from different image views is already an error.
   return storage_.data_ == other.storage_.data_;
 }
 
 template <class PixelFormat>
-constexpr bool ImageViewIterator<PixelFormat>::operator!=(ImageViewIterator other) const {
+constexpr bool ImageViewIterator<PixelFormat>::operator!=(ImageViewIterator other) const noexcept {
   return storage_.data_ != other.storage_.data_;
 }
 
 template <class PixelFormat>
-constexpr std::ptrdiff_t ImageViewIterator<PixelFormat>::operator-(ImageViewIterator other) const {
+constexpr bool ImageViewIterator<PixelFormat>::operator<(ImageViewIterator other) const noexcept {
+  return storage_.data_ < other.storage_.data_;
+}
+
+template <class PixelFormat>
+constexpr bool ImageViewIterator<PixelFormat>::operator<=(ImageViewIterator other) const noexcept {
+  return storage_.data_ <= other.storage_.data_;
+}
+
+template <class PixelFormat>
+constexpr bool ImageViewIterator<PixelFormat>::operator>(ImageViewIterator other) const noexcept {
+  return storage_.data_ > other.storage_.data_;
+}
+
+template <class PixelFormat>
+constexpr bool ImageViewIterator<PixelFormat>::operator>=(ImageViewIterator other) const noexcept {
+  return storage_.data_ >= other.storage_.data_;
+}
+
+template <class PixelFormat>
+constexpr std::ptrdiff_t ImageViewIterator<PixelFormat>::operator-(ImageViewIterator other) const noexcept {
   static_assert(PixelFormat::kBytesPerPixel != 0, "Division by zero.");
   return (storage_.data_ - other.storage_.data_) / PixelFormat::kBytesPerPixel;
 }

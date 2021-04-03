@@ -19,6 +19,10 @@ class ImageRowView {
 
   using byte_type = std::conditional_t<Mutable, std::byte, const std::byte>;
   using color_type = typename PixelFormat::color_type;
+
+  // Constant LegacyInputIterator whose value_type is color_type. The type satisfies all
+  // requirements of LegacyRandomAccessIterator except the multipass guarantee: for dereferenceable iterators a and b
+  // with a == b, there is no requirement that *a and *b are bound to the same object.
   using const_iterator = detail::ImageViewIterator<PixelFormat>;
   using iterator = const_iterator;
 
@@ -45,9 +49,9 @@ class ImageRowView {
 
   constexpr std::size_t size_bytes() const noexcept;
 
-  constexpr iterator begin() const noexcept;
+  constexpr const_iterator begin() const noexcept;
 
-  constexpr iterator end() const noexcept;
+  constexpr const_iterator end() const noexcept;
 
   constexpr color_type operator[](std::size_t index) const;
 
@@ -113,13 +117,13 @@ constexpr std::size_t ImageRowView<PixelFormat, Mutable>::size_bytes() const noe
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::begin() const noexcept -> iterator {
-  return iterator(storage_.data_, storage_.pixelFormat());
+constexpr auto ImageRowView<PixelFormat, Mutable>::begin() const noexcept -> const_iterator {
+  return const_iterator(storage_.data_, storage_.pixelFormat());
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::end() const noexcept -> iterator {
-  return iterator(storage_.data_ + width_ * PixelFormat::kBytesPerPixel, storage_.pixelFormat());
+constexpr auto ImageRowView<PixelFormat, Mutable>::end() const noexcept -> const_iterator {
+  return const_iterator(storage_.data_ + width_ * PixelFormat::kBytesPerPixel, storage_.pixelFormat());
 }
 
 template <class PixelFormat, bool Mutable>
