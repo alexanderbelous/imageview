@@ -84,6 +84,8 @@ class ContinuousImageView {
   constexpr unsigned int width() const noexcept;
   // Returns the total number of pixels.
   constexpr std::size_t area() const noexcept;
+  // Returns true if the image has zero area, false otherwise.
+  constexpr bool empty() const noexcept;
   // Returns the pixel format used by this image.
   constexpr const PixelFormat& pixelFormat() const noexcept;
   // Returns the pointer to the bitmap data.
@@ -160,6 +162,11 @@ constexpr unsigned int ContinuousImageView<PixelFormat, Mutable>::width() const 
 template <class PixelFormat, bool Mutable>
 constexpr std::size_t ContinuousImageView<PixelFormat, Mutable>::area() const noexcept {
   return static_cast<std::size_t>(height_) * width_;
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr bool ContinuousImageView<PixelFormat, Mutable>::empty() const noexcept {
+  return height_ == 0 || width_ == 0;
 }
 
 template <class PixelFormat, bool Mutable>

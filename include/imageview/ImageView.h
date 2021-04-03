@@ -57,6 +57,9 @@ class ImageView {
 
   constexpr unsigned int area() const noexcept;
 
+  // Returns true if the image has zero area, false otherwise.
+  constexpr bool empty() const noexcept;
+
   // Returns the pixel format used by this image.
   constexpr const PixelFormat& pixelFormat() const noexcept;
 
@@ -132,6 +135,11 @@ constexpr unsigned int ImageView<PixelFormat, Mutable>::stride() const noexcept 
 template <class PixelFormat, bool Mutable>
 constexpr unsigned int ImageView<PixelFormat, Mutable>::area() const noexcept {
   return height_ * width_;
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr bool ImageView<PixelFormat, Mutable>::empty() const noexcept {
+  return height_ == 0 || width_ == 0;
 }
 
 template <class PixelFormat, bool Mutable>
