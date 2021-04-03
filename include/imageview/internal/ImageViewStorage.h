@@ -31,8 +31,9 @@ class ImageViewStorage {
 
   constexpr byte_type* data() const noexcept { return data_; }
 
- private:
   byte_type* data_ = nullptr;
+
+ private:
   PixelFormat pixel_format_;
 };
 
@@ -63,7 +64,6 @@ class ImageViewStorage<PixelFormat, Mutable,
 
   constexpr byte_type* data() const noexcept { return data_; }
 
- private:
   byte_type* data_ = nullptr;
 };
 

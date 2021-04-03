@@ -2,6 +2,7 @@
 
 #include <imageview/IsPixelFormat.h>
 #include <imageview/internal/ImageViewStorage.h>
+#include <imageview/ImageViewIterator.h>
 
 #include <gsl/assert>
 #include <gsl/span>
@@ -18,6 +19,8 @@ class ImageRowView {
 
   using byte_type = std::conditional_t<Mutable, std::byte, const std::byte>;
   using color_type = typename PixelFormat::color_type;
+  using const_iterator = detail::ImageViewIterator<PixelFormat>;
+  using iterator = const_iterator;
 
   constexpr ImageRowView() = default;
 
@@ -41,6 +44,10 @@ class ImageRowView {
   constexpr bool empty() const noexcept;
 
   constexpr std::size_t size_bytes() const noexcept;
+
+  constexpr iterator begin() const noexcept;
+
+  constexpr iterator end() const noexcept;
 
   constexpr color_type operator[](std::size_t index) const;
 
@@ -103,6 +110,16 @@ constexpr bool ImageRowView<PixelFormat, Mutable>::empty() const noexcept {
 template <class PixelFormat, bool Mutable>
 constexpr std::size_t ImageRowView<PixelFormat, Mutable>::size_bytes() const noexcept {
   return static_cast<std::size_t>(width_) * PixelFormat::kBytesPerPixel;
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr auto ImageRowView<PixelFormat, Mutable>::begin() const noexcept -> iterator {
+  return iterator(storage_.data_, storage_.pixelFormat());
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr auto ImageRowView<PixelFormat, Mutable>::end() const noexcept -> iterator {
+  return iterator(storage_.data_ + width_ * PixelFormat::kBytesPerPixel, storage_.pixelFormat());
 }
 
 template <class PixelFormat, bool Mutable>
