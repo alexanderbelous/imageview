@@ -1,8 +1,8 @@
 #pragma once
 
 #include <imageview/IsPixelFormat.h>
+#include <imageview/internal/ImageViewIterator.h>
 #include <imageview/internal/ImageViewStorage.h>
-#include <imageview/ImageViewIterator.h>
 
 #include <gsl/assert>
 #include <gsl/span>
