@@ -40,7 +40,7 @@ TEST(ImageViewIterator, PostIncrement) {
   static_assert(std::is_same_v<decltype(iter++), ConstIteratorRGB24>, "Must be ConstIteratorRGB24");
   ConstIteratorRGB24 iter2 = iter++;
   // iter2 must point to pixel[0].
-  EXPECT_EQ(*iter, RGB24(0, 1, 2));
+  EXPECT_EQ(*iter2, RGB24(0, 1, 2));
   // iter must point to pixel[1].
   EXPECT_EQ(*iter, RGB24(3, 4, 5));
 }
@@ -54,8 +54,8 @@ TEST(ImageViewIterator, NonConst) {
   IteratorRGB24 iter(data.data(), kPixelFormat);
   *iter = RGB24{13, 181, 254};
   EXPECT_EQ(data[0], std::byte{13});
-  EXPECT_EQ(data[181], std::byte{181});
-  EXPECT_EQ(data[254], std::byte{254});
+  EXPECT_EQ(data[1], std::byte{181});
+  EXPECT_EQ(data[2], std::byte{254});
 }
 
 }  // namespace
