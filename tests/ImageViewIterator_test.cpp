@@ -53,9 +53,9 @@ TEST(ImageViewIterator, NonConst) {
   std::array<std::byte, kNumPixels * PixelFormatRGB24::kBytesPerPixel> data{};
   IteratorRGB24 iter(data.data(), kPixelFormat);
   *iter = RGB24{13, 181, 254};
-  EXPECT_EQ(data[0], 13);
-  EXPECT_EQ(data[181], 181);
-  EXPECT_EQ(data[254], 254);
+  EXPECT_EQ(data[0], std::byte{13});
+  EXPECT_EQ(data[181], std::byte{181});
+  EXPECT_EQ(data[254], std::byte{254});
 }
 
 }  // namespace
