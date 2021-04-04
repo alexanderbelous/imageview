@@ -22,14 +22,18 @@ class PixelRef {
   constexpr PixelRef(PixelRef&&) = default;
   ~PixelRef() = default;
 
+  // Implicit conversion to color_type.
+  // \return the color of the referenced pixel.
   constexpr operator color_type() const;
 
+  // Assigns the specified color to the referenced pixel.
+  // \param color - color to assign.
+  // \return *this.
   constexpr PixelRef& operator=(const color_type& color);
 
-  // Note: this function changes the color of the referenced pixel, rather than PixelRef itself.
-  // This allows writing code like:
-  //   image(1, 1) = other_image(10, 10);
-  // where both 'image' and 'other_image' are mutable views.
+  // Assigns the specified color to the referenced pixel.
+  // Note: PixelRef has reference semantics: copy and move assignment operators change the value of the
+  // referenced pixel rather than PixelRef object itself.
   constexpr PixelRef& operator=(const PixelRef& other);
   constexpr PixelRef& operator=(PixelRef&& other);
 
@@ -61,7 +65,7 @@ constexpr PixelRef<PixelFormat>& PixelRef<PixelFormat>::operator=(const color_ty
 
 template <class PixelFormat>
 constexpr PixelRef<PixelFormat>& PixelRef<PixelFormat>::operator=(const PixelRef& other) {
-  // In theory, we could just memcpy() the binary data. However, if PixelFormat is stateful,
+  // TODO: In theory, we could just memcpy() the binary data. However, if PixelFormat is stateful,
   // and the state of our PixelFormat differs from the state of @other, then simply copying the binary
   // data might lead to the wrong result.
   // Possible workaround: add a constexpr if for the case when PixelFormat is an empty class.
