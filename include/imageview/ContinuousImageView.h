@@ -3,6 +3,7 @@
 #include <imageview/ImageRowView.h>
 #include <imageview/IsPixelFormat.h>
 #include <imageview/internal/ImageViewStorage.h>
+#include <imageview/internal/PixelRef.h>
 
 #include <gsl/assert>
 #include <gsl/span>
@@ -35,7 +36,8 @@ class ContinuousImageView {
   static_assert(IsPixelFormat<PixelFormat>::value, "Not a PixelFormat.");
 
   using byte_type = std::conditional_t<Mutable, std::byte, const std::byte>;
-  using color_type = typename PixelFormat::color_type;
+  using value_type = typename PixelFormat::color_type;
+  using reference = std::conditional_t<Mutable, detail::PixelRef<PixelFormat>, value_type>;
 
   // Construct an empty view.
   // This constructor is only available if PixelFormat is default-constructible.
@@ -92,12 +94,23 @@ class ContinuousImageView {
   constexpr gsl::span<byte_type> data() const noexcept;
   // Returns the total size of the bitmap in bytes.
   constexpr std::size_t size_bytes() const noexcept;
-  // Returns the color of the specified pixel.
-  constexpr color_type operator()(unsigned int y, unsigned int x) const;
-  // Assign the given color to the specified pixel.
-  // This function fails at compile time if Mutable is false.
-  // TODO: don't provide this function for immutable views at all.
-  constexpr void setPixel(unsigned int y, unsigned int x, const color_type& color) const;
+  // Access the specified pixel.
+  //
+  // If Mutable == true, then this function simply returns the color of the specified pixel.
+  // Otherwise, it returns a proxy object, which mimics value_type&:
+  // * is implicitly convertible to value_type, e.g.,
+  //
+  //   ContinuousImageView<PixelFormatRGB24, true> image(...);
+  //   const RGB24 color = image(1, 1);
+  //
+  // * you can assign a value_type to it, changing the color of the specified pixel:
+  //
+  //   ContinuousImageView<PixelFormatRGB24, true> image(...);
+  //   image(1, 1) = RGB24(255, 255, 0);
+  //
+  // \param y - Y coordinate of the pixel. Should be within [0; height()).
+  // \param x - X coordinate of the pixel. Should be within [0; width()).
+  constexpr reference operator()(unsigned int y, unsigned int x) const;
   // Returns a non-owning view into the specified row of the image.
   constexpr ImageRowView<PixelFormat, Mutable> row(unsigned int y) const;
 
@@ -194,18 +207,14 @@ constexpr auto ContinuousImageView<PixelFormat, Mutable>::getPixelData(unsigned 
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr typename PixelFormat::color_type ContinuousImageView<PixelFormat, Mutable>::operator()(unsigned int y,
-                                                                                                 unsigned int x) const {
-  const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
-  return storage_.pixelFormat().read(pixel_data);
-}
-
-template <class PixelFormat, bool Mutable>
-constexpr void ContinuousImageView<PixelFormat, Mutable>::setPixel(unsigned int y, unsigned int x,
-                                                                   const color_type& color) const {
-  static_assert(Mutable, "setPixel() can only be called for mutable views.");
-  const gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
-  storage_.pixelFormat().write(color, pixel_data);
+constexpr auto ContinuousImageView<PixelFormat, Mutable>::operator()(unsigned int y, unsigned int x) const
+    -> reference {
+  const gsl::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
+  if constexpr (Mutable) {
+    return detail::PixelRef<PixelFormat>(pixel_data, storage_.pixelFormat());
+  } else {
+    return storage_.pixelFormat().read(pixel_data);
+  }
 }
 
 template <class PixelFormat, bool Mutable>

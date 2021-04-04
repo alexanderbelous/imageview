@@ -23,8 +23,8 @@ class ImageRowView {
   // Constant LegacyInputIterator whose value_type is color_type. The type satisfies all
   // requirements of LegacyRandomAccessIterator except the multipass guarantee: for dereferenceable iterators a and b
   // with a == b, there is no requirement that *a and *b are bound to the same object.
-  using const_iterator = detail::ImageViewIterator<PixelFormat>;
-  using iterator = const_iterator;
+  using const_iterator = detail::ImageViewIterator<PixelFormat, false>;
+  using iterator = detail::ImageViewIterator<PixelFormat, Mutable>;
 
   // Constructs an empty view.
   // This constructor is only available if PixelFormat is default-constructible.
@@ -90,10 +90,16 @@ class ImageRowView {
   constexpr std::size_t size_bytes() const noexcept;
 
   // Returns an iterator to the first pixel.
-  constexpr const_iterator begin() const;
+  constexpr iterator begin() const;
+
+  // Returns a const iterator to the first pixel.
+  constexpr const_iterator cbegin() const;
 
   // Returns an iterator past the last pixel.
-  constexpr const_iterator end() const;
+  constexpr iterator end() const;
+
+  // Returns a const iterator past the last pixel.
+  constexpr const_iterator cend() const;
 
   // Returns the color of the specified pixel.
   // \param index - 0-based index of the pixel. No bounds checking is performed - the behavior is undefined if @index is
@@ -183,12 +189,22 @@ constexpr std::size_t ImageRowView<PixelFormat, Mutable>::size_bytes() const noe
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::begin() const -> const_iterator {
+constexpr auto ImageRowView<PixelFormat, Mutable>::begin() const -> iterator {
+  return iterator(storage_.data_, storage_.pixelFormat());
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr auto ImageRowView<PixelFormat, Mutable>::cbegin() const -> const_iterator {
   return const_iterator(storage_.data_, storage_.pixelFormat());
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::end() const -> const_iterator {
+constexpr auto ImageRowView<PixelFormat, Mutable>::end() const -> iterator {
+  return iterator(storage_.data_ + width_ * PixelFormat::kBytesPerPixel, storage_.pixelFormat());
+}
+
+template <class PixelFormat, bool Mutable>
+constexpr auto ImageRowView<PixelFormat, Mutable>::cend() const -> const_iterator {
   return const_iterator(storage_.data_ + width_ * PixelFormat::kBytesPerPixel, storage_.pixelFormat());
 }
 

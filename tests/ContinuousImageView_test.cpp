@@ -29,5 +29,20 @@ TEST(ContinuousImageView, ConstructWithoutPixelFormat) {
   static_assert(image.data().data() == data.data(), "Invalid pointer to th the bitmap.");
 }
 
+TEST(ContinuousImageView, SetPixel) {
+  constexpr RGB24 kBlack(0, 0, 0);
+  constexpr RGB24 kGreen(0, 255, 0);
+  constexpr unsigned int kHeight = 3;
+  constexpr unsigned int kWidth = 2;
+  constexpr std::size_t kDataSize = kHeight * kWidth * PixelFormatRGB24::kBytesPerPixel;
+  std::array<std::byte, kDataSize> data{};
+  ContinuousImageView<PixelFormatRGB24, true> image(kHeight, kWidth, data);
+  // Pixel (1, 1) must be black because data is zero-initialized.
+  EXPECT_EQ(image(1, 1), kBlack);
+  // Set pixel (1, 1) to green.
+  image(1, 1) = kGreen;
+  EXPECT_EQ(image(1, 1), kGreen);
+}
+
 }  // namespace
 }  // namespace imageview
