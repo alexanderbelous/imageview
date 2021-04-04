@@ -3,6 +3,7 @@
 #include <imageview/IsPixelFormat.h>
 #include <imageview/internal/ImageViewIterator.h>
 #include <imageview/internal/ImageViewStorage.h>
+#include <imageview/internal/PixelRef.h>
 
 #include <gsl/assert>
 #include <gsl/span>
@@ -18,9 +19,11 @@ class ImageRowView {
   static_assert(IsPixelFormat<PixelFormat>::value, "Not a PixelFormat.");
 
   using byte_type = std::conditional_t<Mutable, std::byte, const std::byte>;
-  using color_type = typename PixelFormat::color_type;
+  using value_type = typename PixelFormat::color_type;
+  // TODO: consider using 'const value_type' instead of 'value_type' for immutable views.
+  using reference = std::conditional_t<Mutable, detail::PixelRef<PixelFormat>, value_type>;
 
-  // Constant LegacyInputIterator whose value_type is color_type. The type satisfies all
+  // Constant LegacyInputIterator whose value_type is @value_type. The type satisfies all
   // requirements of LegacyRandomAccessIterator except the multipass guarantee: for dereferenceable iterators a and b
   // with a == b, there is no requirement that *a and *b are bound to the same object.
   using const_iterator = detail::ImageViewIterator<PixelFormat, false>;
@@ -104,22 +107,14 @@ class ImageRowView {
   // Returns the color of the specified pixel.
   // \param index - 0-based index of the pixel. No bounds checking is performed - the behavior is undefined if @index is
   // outside [0; size()).
-  constexpr color_type operator[](std::size_t index) const;
+  constexpr reference operator[](std::size_t index) const;
 
   // Returns the color of the specified pixel.
   // \param index - 0-based index of the pixel.
   // \throw std::out_of_range if @index is outside [0; size()).
-  constexpr color_type at(std::size_t index) const;
-
-  // Sets the color of the specified pixel to the given value.
-  // \param index - 0-based index of the pixel.
-  // \param color - color to assign.
-  // \throw std::out_of_range if @index is outside [0; size()).
-  constexpr void setElement(std::size_t index, const color_type& color) const;
+  constexpr reference at(std::size_t index) const;
 
  private:
-  constexpr gsl::span<byte_type, PixelFormat::kBytesPerPixel> getPixelData(std::size_t index) const;
-
   detail::ImageViewStorage<PixelFormat, Mutable> storage_;
   std::size_t width_ = 0;
 };
@@ -209,34 +204,22 @@ constexpr auto ImageRowView<PixelFormat, Mutable>::cend() const -> const_iterato
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::getPixelData(std::size_t index) const
-    -> gsl::span<byte_type, PixelFormat::kBytesPerPixel> {
-  return gsl::span<byte_type, PixelFormat::kBytesPerPixel>(storage_.data() + index * PixelFormat::kBytesPerPixel,
-                                                           PixelFormat::kBytesPerPixel);
+constexpr auto ImageRowView<PixelFormat, Mutable>::operator[](std::size_t index) const -> reference {
+  const gsl::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data(
+      storage_.data() + index * PixelFormat::kBytesPerPixel, PixelFormat::kBytesPerPixel);
+  if constexpr (Mutable) {
+    return detail::PixelRef<PixelFormat>(pixel_data, pixelFormat());
+  } else {
+    return pixelFormat().read(pixel_data);
+  }
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::operator[](std::size_t index) const -> color_type {
-  const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(index);
-  return storage_.pixelFormat().read(pixel_data);
-}
-
-template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::at(std::size_t index) const -> color_type {
+constexpr auto ImageRowView<PixelFormat, Mutable>::at(std::size_t index) const -> reference {
   if (index >= width_) {
     throw std::out_of_range("ImageRowView::at(): attempting to access an element out of range.");
   }
   return (*this)[index];
-}
-
-template <class PixelFormat, bool Mutable>
-constexpr void ImageRowView<PixelFormat, Mutable>::setElement(std::size_t index, const color_type& color) const {
-  static_assert(Mutable, "SetElement() can only be called for mutable views.");
-  if (index >= width_) {
-    throw std::out_of_range("ImageRowView::setElement(): attempting to access an element out of range.");
-  }
-  const gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(index);
-  return storage_.pixelFormat().write(color, pixel_data);
 }
 
 }  // namespace imageview

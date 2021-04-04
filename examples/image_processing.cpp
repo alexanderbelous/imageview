@@ -26,10 +26,9 @@ RGB24 computeMeanColor(ImageView<PixelFormatRGB24> image) {
 
 void replaceColor(ContinuousImageView<PixelFormatRGB24, true> image,
                   const RGB24& color_original, const RGB24& color_new) {
-  const auto flat_image = flatten(image);
-  for (int i = 0; i < flat_image.size(); ++i) {
-    if (flat_image[i] == color_original) {
-      flat_image.setElement(i, color_new);
+  for (auto&& pixel : flatten(image)) {
+    if (pixel == color_original) {
+      pixel = color_new;
     }
   }
 }

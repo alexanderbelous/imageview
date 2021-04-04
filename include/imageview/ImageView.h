@@ -2,6 +2,7 @@
 
 #include <imageview/ContinuousImageView.h>
 #include <imageview/internal/ImageViewStorage.h>
+#include <imageview/internal/PixelRef.h>
 
 #include <gsl/span>
 
@@ -15,7 +16,9 @@ class ImageView {
   static_assert(IsPixelFormat<PixelFormat>::value, "Not a PixelFormat.");
 
   using byte_type = std::conditional_t<Mutable, std::byte, const std::byte>;
-  using color_type = typename PixelFormat::color_type;
+  using value_type = typename PixelFormat::color_type;
+  // TODO: consider using 'const value_type' instead of 'value_type' for immutable views.
+  using reference = std::conditional_t<Mutable, detail::PixelRef<PixelFormat>, value_type>;
 
   // Construct an empty view.
   template <class Enable = std::enable_if_t<std::is_default_constructible_v<PixelFormat>>>
@@ -65,7 +68,7 @@ class ImageView {
 
   constexpr gsl::span<byte_type> data() const noexcept;
 
-  constexpr color_type operator()(unsigned int y, unsigned int x) const;
+  constexpr reference operator()(unsigned int y, unsigned int x) const;
 
   constexpr ImageRowView<PixelFormat, Mutable> row(unsigned int y) const;
 
@@ -154,13 +157,16 @@ constexpr auto ImageView<PixelFormat, Mutable>::data() const noexcept -> gsl::sp
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr typename PixelFormat::color_type ImageView<PixelFormat, Mutable>::operator()(unsigned int y,
-                                                                                       unsigned int x) const {
+constexpr auto ImageView<PixelFormat, Mutable>::operator()(unsigned int y, unsigned int x) const -> reference {
   Expects(y < height_);
   Expects(x < width_);
-  const gsl::span<const std::byte, PixelFormat::kBytesPerPixel> pixel_data(
+  const gsl::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data(
       storage_.data() + (y * stride_ + x) * PixelFormat::kBytesPerPixel, PixelFormat::kBytesPerPixel);
-  return storage_.pixelFormat().read(pixel_data);
+  if constexpr (Mutable) {
+    return detail::PixelRef<PixelFormat>(pixel_data, pixelFormat());
+  } else {
+    return pixelFormat().read(pixel_data);
+  }
 }
 
 template <class PixelFormat, bool Mutable>
