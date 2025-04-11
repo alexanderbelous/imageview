@@ -6,10 +6,9 @@
 #include <imageview/internal/ImageViewStorage.h>
 #include <imageview/internal/PixelRef.h>
 
-#include <gsl/assert>
-#include <gsl/span>
-
 #include <cstddef>
+#include <span>
+#include <stdexcept>
 #include <type_traits>
 
 namespace imageview {
@@ -24,8 +23,8 @@ namespace imageview {
 //           public:
 //            using color_type = MyColor;
 //            static constexpr int kBytesPerPixel = N;
-//            color_type read(gsl::span<const std::byte, kBytesPerPixel> pixel_data) const;
-//            void write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> pixel_data) const;
+//            color_type read(std::span<const std::byte, kBytesPerPixel> pixel_data) const;
+//            void write(const color_type& color, std::span<std::byte, kBytesPerPixel> pixel_data) const;
 //          };
 // \param Mutable - if true, ContinuousImageView provides write access to the
 //        bitmap (naturally, this requires that ContinuousImageView is
@@ -73,8 +72,7 @@ class ContinuousImageView {
   //        Pixels are assumed to be stored contiguously, with each pixel
   //        occupying exactly PixelFormat::kBytesPerPixel.
   template <class Enable = std::enable_if_t<std::is_default_constructible_v<PixelFormat>>>
-  constexpr ContinuousImageView(unsigned int height, unsigned int width, gsl::span<byte_type> data) noexcept(
-      std::is_nothrow_default_constructible_v<PixelFormat>);
+  constexpr ContinuousImageView(unsigned int height, unsigned int width, std::span<byte_type> data);
 
   // Construct a view into an image.
   // \param height - height of the image.
@@ -85,7 +83,7 @@ class ContinuousImageView {
   //        Pixels are assumed to be stored contiguously, with each pixel
   //        occupying exactly PixelFormat::kBytesPerPixel.
   // \param pixel_format - PixelFormat instance to use.
-  constexpr ContinuousImageView(unsigned int height, unsigned int width, gsl::span<byte_type> data,
+  constexpr ContinuousImageView(unsigned int height, unsigned int width, std::span<byte_type> data,
                                 const PixelFormat& pixel_format);
 
   // Construct a view into an image.
@@ -97,7 +95,7 @@ class ContinuousImageView {
   //        Pixels are assumed to be stored contiguously, with each pixel
   //        occupying exactly PixelFormat::kBytesPerPixel.
   // \param pixel_format - PixelFormat instance to use.
-  constexpr ContinuousImageView(unsigned int height, unsigned int width, gsl::span<byte_type> data,
+  constexpr ContinuousImageView(unsigned int height, unsigned int width, std::span<byte_type> data,
                                 PixelFormat&& pixel_format);
 
   // Construct a read-only view from a mutable view.
@@ -120,7 +118,7 @@ class ContinuousImageView {
   constexpr const PixelFormat& pixelFormat() const noexcept;
 
   // Returns the pointer to the bitmap data.
-  constexpr gsl::span<byte_type> data() const noexcept;
+  constexpr std::span<byte_type> data() const noexcept;
 
   // Returns the total size of the bitmap in bytes.
   constexpr std::size_t size_bytes() const noexcept;
@@ -149,7 +147,7 @@ class ContinuousImageView {
   constexpr ImageRowView<PixelFormat, Mutable> row(unsigned int y) const;
 
  private:
-  constexpr gsl::span<byte_type, PixelFormat::kBytesPerPixel> getPixelData(unsigned int y, unsigned int x) const;
+  constexpr std::span<byte_type, PixelFormat::kBytesPerPixel> getPixelData(unsigned int y, unsigned int x) const;
 
   detail::ImageViewStorage<PixelFormat, Mutable> storage_;
   unsigned int height_ = 0;
@@ -169,25 +167,35 @@ template <class PixelFormat, bool Mutable>
 template <class Enable>
 constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(
     unsigned int height, unsigned int width,
-    gsl::span<byte_type> data) noexcept(std::is_nothrow_default_constructible_v<PixelFormat>)
-    : storage_(data.data()), height_(height), width_(width) {
-  Expects(data.size() == height * width * PixelFormat::kBytesPerPixel);
+    std::span<byte_type> data)
+    : storage_(data.data()), height_(height), width_(width)
+{
+  if (data.size() != height * width * PixelFormat::kBytesPerPixel)
+  {
+    throw std::invalid_argument("ContinuousImageView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(unsigned int height, unsigned int width,
-                                                                         gsl::span<byte_type> data,
+                                                                         std::span<byte_type> data,
                                                                          const PixelFormat& pixel_format)
     : storage_(data.data(), pixel_format), height_(height), width_(width) {
-  Expects(data.size() == height * width * PixelFormat::kBytesPerPixel);
+  if (data.size() != height * width * PixelFormat::kBytesPerPixel)
+  {
+    throw std::invalid_argument("ContinuousImageView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr ContinuousImageView<PixelFormat, Mutable>::ContinuousImageView(unsigned int height, unsigned int width,
-                                                                         gsl::span<byte_type> data,
+                                                                         std::span<byte_type> data,
                                                                          PixelFormat&& pixel_format)
     : storage_(data.data(), std::move(pixel_format)), height_(height), width_(width) {
-  Expects(data.size() == height * width * PixelFormat::kBytesPerPixel);
+  if (data.size() != height * width * PixelFormat::kBytesPerPixel)
+  {
+    throw std::invalid_argument("ContinuousImageView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
@@ -222,8 +230,8 @@ constexpr const PixelFormat& ContinuousImageView<PixelFormat, Mutable>::pixelFor
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ContinuousImageView<PixelFormat, Mutable>::data() const noexcept -> gsl::span<byte_type> {
-  return gsl::span<byte_type>(storage_.data(), size_bytes());
+constexpr auto ContinuousImageView<PixelFormat, Mutable>::data() const noexcept -> std::span<byte_type> {
+  return std::span<byte_type>(storage_.data(), size_bytes());
 }
 
 template <class PixelFormat, bool Mutable>
@@ -253,17 +261,23 @@ constexpr auto ContinuousImageView<PixelFormat, Mutable>::cend() const -> const_
 
 template <class PixelFormat, bool Mutable>
 constexpr auto ContinuousImageView<PixelFormat, Mutable>::getPixelData(unsigned int y, unsigned int x) const
-    -> gsl::span<byte_type, PixelFormat::kBytesPerPixel> {
-  Expects(y < height_);
-  Expects(x < width_);
+    -> std::span<byte_type, PixelFormat::kBytesPerPixel> {
+  if (y >= height_)
+  {
+    throw std::out_of_range("ContinuousImageView::getPixelData(): y is out of range.");
+  }
+  if (x >= width_)
+  {
+    throw std::out_of_range("ContinuousImageView::getPixelData(): x is out of range.");
+  }
   const std::size_t offset = (y * width_ + x) * PixelFormat::kBytesPerPixel;
-  return gsl::span<byte_type, PixelFormat::kBytesPerPixel>(storage_.data() + offset, PixelFormat::kBytesPerPixel);
+  return std::span<byte_type, PixelFormat::kBytesPerPixel>(storage_.data() + offset, PixelFormat::kBytesPerPixel);
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr auto ContinuousImageView<PixelFormat, Mutable>::operator()(unsigned int y, unsigned int x) const
     -> reference {
-  const gsl::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
+  const std::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data = getPixelData(y, x);
   if constexpr (Mutable) {
     return detail::PixelRef<PixelFormat>(pixel_data, storage_.pixelFormat());
   } else {
@@ -273,9 +287,12 @@ constexpr auto ContinuousImageView<PixelFormat, Mutable>::operator()(unsigned in
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable> ContinuousImageView<PixelFormat, Mutable>::row(unsigned int y) const {
-  Expects(y < height_);
+  if (y >= height_)
+  {
+    throw std::out_of_range("ContinuousImageView::row(): y is out of range.");
+  }
   const std::size_t bytes_per_row = static_cast<std::size_t>(width_) * PixelFormat::kBytesPerPixel;
-  const gsl::span<byte_type> row_data(storage_.data() + y * bytes_per_row, bytes_per_row);
+  const std::span<byte_type> row_data(storage_.data() + y * bytes_per_row, bytes_per_row);
   return ImageRowView<PixelFormat, Mutable>(row_data, width_, pixelFormat());
 }
 

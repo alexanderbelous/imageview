@@ -1,8 +1,7 @@
 #pragma once
 
-#include <gsl/span>
-
 #include <cstddef>
+#include <span>
 
 namespace imageview {
 
@@ -13,17 +12,17 @@ class PixelFormatGrayscale8 {
   using color_type = unsigned char;
   static constexpr int kBytesPerPixel = 1;
 
-  constexpr color_type read(gsl::span<const std::byte, kBytesPerPixel> data) const;
+  constexpr color_type read(std::span<const std::byte, kBytesPerPixel> data) const;
 
-  constexpr void write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data) const;
+  constexpr void write(const color_type& color, std::span<std::byte, kBytesPerPixel> data) const;
 };
 
 constexpr PixelFormatGrayscale8::color_type PixelFormatGrayscale8::read(
-    gsl::span<const std::byte, kBytesPerPixel> data) const {
+  std::span<const std::byte, kBytesPerPixel> data) const {
   return static_cast<color_type>(data[0]);
 }
 
-constexpr void PixelFormatGrayscale8::write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data) const {
+constexpr void PixelFormatGrayscale8::write(const color_type& color, std::span<std::byte, kBytesPerPixel> data) const {
   data[0] = static_cast<std::byte>(color);
 }
 

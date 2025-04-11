@@ -1,8 +1,7 @@
 #pragma once
 
-#include <gsl/span>
-
 #include <cstddef>
+#include <span>
 
 namespace imageview {
 
@@ -29,9 +28,9 @@ class PixelFormatRGB24 {
   using color_type = RGB24;
   static constexpr int kBytesPerPixel = 3;
 
-  constexpr color_type read(gsl::span<const std::byte, kBytesPerPixel> data) const;
+  constexpr color_type read(std::span<const std::byte, kBytesPerPixel> data) const;
 
-  constexpr void write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data) const;
+  constexpr void write(const color_type& color, std::span<std::byte, kBytesPerPixel> data) const;
 };
 
 constexpr bool operator==(const RGB24& lhs, const RGB24& rhs) {
@@ -40,12 +39,12 @@ constexpr bool operator==(const RGB24& lhs, const RGB24& rhs) {
 
 constexpr bool operator!=(const RGB24& lhs, const RGB24& rhs) { return !(lhs == rhs); }
 
-constexpr PixelFormatRGB24::color_type PixelFormatRGB24::read(gsl::span<const std::byte, kBytesPerPixel> data) const {
+constexpr PixelFormatRGB24::color_type PixelFormatRGB24::read(std::span<const std::byte, kBytesPerPixel> data) const {
   return color_type(static_cast<unsigned char>(data[0]), static_cast<unsigned char>(data[1]),
                     static_cast<unsigned char>(data[2]));
 }
 
-constexpr void PixelFormatRGB24::write(const color_type& color, gsl::span<std::byte, kBytesPerPixel> data) const {
+constexpr void PixelFormatRGB24::write(const color_type& color, std::span<std::byte, kBytesPerPixel> data) const {
   data[0] = static_cast<std::byte>(color.red);
   data[1] = static_cast<std::byte>(color.green);
   data[2] = static_cast<std::byte>(color.blue);

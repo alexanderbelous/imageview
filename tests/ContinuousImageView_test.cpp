@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
+
 namespace imageview {
 namespace {
 
@@ -20,8 +22,6 @@ TEST(ContinuousImageView, ConstructWithoutPixelFormat) {
   constexpr unsigned int kWidth = 2;
   constexpr std::size_t kDataSize = kHeight * kWidth * PixelFormatRGB24::kBytesPerPixel;
   static constexpr std::array<std::byte, kDataSize> data{};
-  static_assert(noexcept(ContinuousImageView<PixelFormatRGB24>(kHeight, kWidth, data)),
-                "This constructor must be noexcept.");
   constexpr ContinuousImageView<PixelFormatRGB24> image(kHeight, kWidth, data);
   static_assert(image.height() == kHeight, "Invalid height.");
   static_assert(image.width() == kWidth, "Invalid width.");

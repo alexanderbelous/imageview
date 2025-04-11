@@ -4,9 +4,9 @@
 #include <imageview/internal/ImageViewStorage.h>
 #include <imageview/internal/PixelRef.h>
 
-#include <gsl/span>
-
 #include <cstddef>
+#include <span>
+#include <stdexcept>
 
 namespace imageview {
 
@@ -29,7 +29,7 @@ class ImageView {
   // \param width - width of the image.
   // \param stride -
   // \param data - bitmap data.
-  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, gsl::span<byte_type> data);
+  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, std::span<byte_type> data);
 
   // Construct a view into an image.
   // \param height - height of the image.
@@ -37,9 +37,9 @@ class ImageView {
   // \param stride -
   // \param data - bitmap data.
   // \param pixel_format - PixelFormat instance to use.
-  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, gsl::span<byte_type> data,
+  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, std::span<byte_type> data,
                       const PixelFormat& pixel_format);
-  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, gsl::span<byte_type> data,
+  constexpr ImageView(unsigned int height, unsigned int width, unsigned int stride, std::span<byte_type> data,
                       PixelFormat&& pixel_format);
 
   // Construct a read-only view from a mutable view.
@@ -66,7 +66,7 @@ class ImageView {
   // Returns the pixel format used by this image.
   constexpr const PixelFormat& pixelFormat() const noexcept;
 
-  constexpr gsl::span<byte_type> data() const noexcept;
+  constexpr std::span<byte_type> data() const noexcept;
 
   constexpr reference operator()(unsigned int y, unsigned int x) const;
 
@@ -81,29 +81,47 @@ class ImageView {
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageView<PixelFormat, Mutable>::ImageView(unsigned int height, unsigned int width, unsigned int stride,
-                                                     gsl::span<byte_type> data)
+                                                     std::span<byte_type> data)
     : storage_(data.data()), height_(height), width_(width), stride_(stride) {
-  Expects(width <= stride);
+  if (stride < width)
+  {
+    throw std::invalid_argument("ImageView(): stride cannot be less than width.");
+  }
   const std::size_t expected_size = (height == 0) ? 0 : ((height - 1) * stride + width) * PixelFormat::kBytesPerPixel;
-  Expects(data.size() == expected_size);
+  if (data.size() != expected_size)
+  {
+    throw std::invalid_argument("ImageView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageView<PixelFormat, Mutable>::ImageView(unsigned int height, unsigned int width, unsigned int stride,
-                                                     gsl::span<byte_type> data, const PixelFormat& pixel_format)
+                                                     std::span<byte_type> data, const PixelFormat& pixel_format)
     : storage_(data.data(), pixel_format), height_(height), width_(width), stride_(stride) {
-  Expects(width <= stride);
+  if (stride < width)
+  {
+    throw std::invalid_argument("ImageView(): stride cannot be less than width.");
+  }
   const std::size_t expected_size = (height == 0) ? 0 : ((height - 1) * stride + width) * PixelFormat::kBytesPerPixel;
-  Expects(data.size() == expected_size);
+  if (data.size() != expected_size)
+  {
+    throw std::invalid_argument("ImageView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageView<PixelFormat, Mutable>::ImageView(unsigned int height, unsigned int width, unsigned int stride,
-                                                     gsl::span<byte_type> data, PixelFormat&& pixel_format)
+                                                     std::span<byte_type> data, PixelFormat&& pixel_format)
     : storage_(data.data(), std::move(pixel_format)), height_(height), width_(width), stride_(stride) {
-  Expects(width <= stride);
+  if (stride < width)
+  {
+    throw std::invalid_argument("ImageView(): stride cannot be less than width.");
+  }
   const std::size_t expected_size = (height == 0) ? 0 : ((height - 1) * stride + width) * PixelFormat::kBytesPerPixel;
-  Expects(data.size() == expected_size);
+  if (data.size() != expected_size)
+  {
+    throw std::invalid_argument("ImageView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
@@ -151,16 +169,22 @@ constexpr const PixelFormat& ImageView<PixelFormat, Mutable>::pixelFormat() cons
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageView<PixelFormat, Mutable>::data() const noexcept -> gsl::span<byte_type> {
+constexpr auto ImageView<PixelFormat, Mutable>::data() const noexcept -> std::span<byte_type> {
   const std::size_t data_size = (height_ == 0) ? 0 : ((height_ - 1) * stride_ + width_) * PixelFormat::kBytesPerPixel;
-  return gsl::span<byte_type>(storage_.data(), data_size);
+  return std::span<byte_type>(storage_.data(), data_size);
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr auto ImageView<PixelFormat, Mutable>::operator()(unsigned int y, unsigned int x) const -> reference {
-  Expects(y < height_);
-  Expects(x < width_);
-  const gsl::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data(
+  if (y >= height_)
+  {
+    throw std::out_of_range("ImageView::operator(): y is out of range.");
+  }
+  if (x >= width_)
+  {
+    throw std::out_of_range("ImageView::operator(): x is out of range.");
+  }
+  const std::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data(
       storage_.data() + (y * stride_ + x) * PixelFormat::kBytesPerPixel, PixelFormat::kBytesPerPixel);
   if constexpr (Mutable) {
     return detail::PixelRef<PixelFormat>(pixel_data, pixelFormat());
@@ -171,8 +195,11 @@ constexpr auto ImageView<PixelFormat, Mutable>::operator()(unsigned int y, unsig
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable> ImageView<PixelFormat, Mutable>::row(unsigned int y) const {
-  Expects(y < height_);
-  const gsl::span<byte_type> row_data(storage_.data() + y * stride_ * PixelFormat::kBytesPerPixel,
+  if (y >= height_)
+  {
+    throw std::out_of_range("ImageView::row(): y is out of range.");
+  }
+  const std::span<byte_type> row_data(storage_.data() + y * stride_ * PixelFormat::kBytesPerPixel,
                                       width_ * PixelFormat::kBytesPerPixel);
   return ImageRowView<PixelFormat>(row_data, width_, pixelFormat());
 }

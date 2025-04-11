@@ -3,7 +3,7 @@
 #include <imageview/IsPixelFormat.h>
 #include <imageview/internal/ImageViewStorage.h>
 
-#include <gsl/span>
+#include <span>
 
 namespace imageview {
 namespace detail {
@@ -15,7 +15,7 @@ class PixelRef {
 
   using color_type = typename PixelFormat::color_type;
 
-  constexpr PixelRef(gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data,
+  constexpr PixelRef(std::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data,
                      std::reference_wrapper<const PixelFormat> pixel_format);
 
   constexpr PixelRef(const PixelRef& other) = default;
@@ -44,21 +44,21 @@ class PixelRef {
 };
 
 template <class PixelFormat>
-constexpr PixelRef<PixelFormat>::PixelRef(gsl::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data,
+constexpr PixelRef<PixelFormat>::PixelRef(std::span<std::byte, PixelFormat::kBytesPerPixel> pixel_data,
                                           std::reference_wrapper<const PixelFormat> pixel_format)
     : storage_(pixel_data.data(), pixel_format.get()) {}
 
 template <class PixelFormat>
 constexpr PixelRef<PixelFormat>::operator color_type() const {
   constexpr std::size_t kBytesPerPixel = PixelFormat::kBytesPerPixel;
-  const gsl::span<const std::byte, kBytesPerPixel> pixel_data(storage_.data_, kBytesPerPixel);
+  const std::span<const std::byte, kBytesPerPixel> pixel_data(storage_.data_, kBytesPerPixel);
   return storage_.pixelFormat().read(pixel_data);
 }
 
 template <class PixelFormat>
 constexpr PixelRef<PixelFormat>& PixelRef<PixelFormat>::operator=(const color_type& color) {
   constexpr std::size_t kBytesPerPixel = PixelFormat::kBytesPerPixel;
-  const gsl::span<std::byte, kBytesPerPixel> pixel_data(storage_.data_, kBytesPerPixel);
+  const std::span<std::byte, kBytesPerPixel> pixel_data(storage_.data_, kBytesPerPixel);
   storage_.pixelFormat().write(color, pixel_data);
   return *this;
 }

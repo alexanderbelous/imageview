@@ -47,7 +47,7 @@ class ImageViewIterator {
 
   constexpr const PixelFormat& pixelFormat() const noexcept;
 
-  constexpr gsl::span<byte_type, PixelFormat::kBytesPerPixel> getPixelData() const noexcept;
+  constexpr std::span<byte_type, PixelFormat::kBytesPerPixel> getPixelData() const noexcept;
 
   constexpr reference operator*() const;
 
@@ -100,8 +100,8 @@ constexpr const PixelFormat& ImageViewIterator<PixelFormat, Mutable>::pixelForma
 
 template <class PixelFormat, bool Mutable>
 constexpr auto ImageViewIterator<PixelFormat, Mutable>::getPixelData() const noexcept
-    -> gsl::span<byte_type, PixelFormat::kBytesPerPixel> {
-  return gsl::span<byte_type, PixelFormat::kBytesPerPixel>(storage_.data_, PixelFormat::kBytesPerPixel);
+    -> std::span<byte_type, PixelFormat::kBytesPerPixel> {
+  return std::span<byte_type, PixelFormat::kBytesPerPixel>(storage_.data_, PixelFormat::kBytesPerPixel);
 }
 
 template <class PixelFormat, bool Mutable>
@@ -121,7 +121,7 @@ constexpr auto ImageViewIterator<PixelFormat, Mutable>::operator*() const -> ref
 template <class PixelFormat, bool Mutable>
 constexpr auto ImageViewIterator<PixelFormat, Mutable>::operator[](std::ptrdiff_t index) const -> reference {
   constexpr std::size_t kBytesPerPixel = PixelFormat::kBytesPerPixel;
-  const gsl::span<byte_type, kBytesPerPixel> pixel_data(storage_.data_ + index * kBytesPerPixel, kBytesPerPixel);
+  const std::span<byte_type, kBytesPerPixel> pixel_data(storage_.data_ + index * kBytesPerPixel, kBytesPerPixel);
   if constexpr (Mutable) {
     return PixelRef<PixelFormat>(pixel_data, pixelFormat());
   } else {

@@ -5,10 +5,8 @@
 #include <imageview/internal/ImageViewStorage.h>
 #include <imageview/internal/PixelRef.h>
 
-#include <gsl/assert>
-#include <gsl/span>
-
 #include <cstddef>
+#include <span>
 #include <stdexcept>
 
 namespace imageview {
@@ -51,8 +49,7 @@ class ImageRowView {
   //
   // Expects(data.size() == width * PixelFormat::kBytesPerPixel)
   template <class Enable = std::enable_if_t<std::is_default_constructible_v<PixelFormat>>>
-  constexpr ImageRowView(gsl::span<byte_type> data,
-                         std::size_t width) noexcept(noexcept(std::is_nothrow_default_constructible_v<PixelFormat>));
+  constexpr ImageRowView(std::span<byte_type> data, std::size_t width);
 
   // Constructs a flat view into the given bitmap.
   // \param data - bitmap data.
@@ -60,8 +57,7 @@ class ImageRowView {
   // \param pixel_format - instance of PixelFormat to use.
   //
   // Expects(data.size() == width * PixelFormat::kBytesPerPixel)
-  constexpr ImageRowView(gsl::span<byte_type> data, std::size_t width, const PixelFormat& pixel_format) noexcept(
-      noexcept(std::is_nothrow_copy_constructible_v<PixelFormat>));
+  constexpr ImageRowView(std::span<byte_type> data, std::size_t width, const PixelFormat& pixel_format);
 
   // Constructs a flat view into the given bitmap.
   // \param data - bitmap data.
@@ -69,8 +65,7 @@ class ImageRowView {
   // \param pixel_format - instance of PixelFormat to use.
   //
   // Expects(data.size() == width * PixelFormat::kBytesPerPixel)
-  constexpr ImageRowView(gsl::span<byte_type> data, std::size_t width, PixelFormat&& pixel_format) noexcept(
-      noexcept(std::is_nothrow_move_constructible_v<PixelFormat>));
+  constexpr ImageRowView(std::span<byte_type> data, std::size_t width, PixelFormat&& pixel_format);
 
   // Construct a read-only view from a mutable view.
   template <class Enable = std::enable_if_t<!Mutable>>
@@ -80,7 +75,7 @@ class ImageRowView {
   constexpr const PixelFormat& pixelFormat() const noexcept;
 
   // Returns the bitmap data.
-  constexpr gsl::span<byte_type> data() const noexcept;
+  constexpr std::span<byte_type> data() const noexcept;
 
   // Returns the total number of pixels in this view.
   constexpr std::size_t size() const noexcept;
@@ -131,26 +126,34 @@ constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(PixelFormat&& pixel_f
 
 template <class PixelFormat, bool Mutable>
 template <class Enable>
-constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(gsl::span<byte_type> data, std::size_t width) noexcept(
-    noexcept(std::is_nothrow_default_constructible_v<PixelFormat>))
+constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(std::span<byte_type> data, std::size_t width)
     : storage_(data.data()), width_(width) {
-  Expects(data.size() == width * PixelFormat::kBytesPerPixel);
+  if (data.size() != width * PixelFormat::kBytesPerPixel)
+  {
+    throw std::invalid_argument("ImageRowView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(
-    gsl::span<byte_type> data, std::size_t width,
-    const PixelFormat& pixel_format) noexcept(noexcept(std::is_nothrow_copy_constructible_v<PixelFormat>))
+    std::span<byte_type> data, std::size_t width,
+    const PixelFormat& pixel_format)
     : storage_(data.data(), pixel_format), width_(width) {
-  Expects(data.size() == width * PixelFormat::kBytesPerPixel);
+  if (data.size() != width * PixelFormat::kBytesPerPixel)
+  {
+    throw std::invalid_argument("ImageRowView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
 constexpr ImageRowView<PixelFormat, Mutable>::ImageRowView(
-    gsl::span<byte_type> data, std::size_t width,
-    PixelFormat&& pixel_format) noexcept(noexcept(std::is_nothrow_move_constructible_v<PixelFormat>))
+    std::span<byte_type> data, std::size_t width,
+    PixelFormat&& pixel_format)
     : storage_(data.data(), std::move(pixel_format)), width_(width) {
-  Expects(data.size() == width * PixelFormat::kBytesPerPixel);
+  if (data.size() != width * PixelFormat::kBytesPerPixel)
+  {
+    throw std::invalid_argument("ImageRowView(): wrong number of bytes in the input data.");
+  }
 }
 
 template <class PixelFormat, bool Mutable>
@@ -164,8 +167,8 @@ constexpr const PixelFormat& ImageRowView<PixelFormat, Mutable>::pixelFormat() c
 }
 
 template <class PixelFormat, bool Mutable>
-constexpr auto ImageRowView<PixelFormat, Mutable>::data() const noexcept -> gsl::span<byte_type> {
-  return gsl::span<byte_type>(storage_.data(), size_bytes());
+constexpr auto ImageRowView<PixelFormat, Mutable>::data() const noexcept -> std::span<byte_type> {
+  return std::span<byte_type>(storage_.data(), size_bytes());
 }
 
 template <class PixelFormat, bool Mutable>
@@ -205,7 +208,7 @@ constexpr auto ImageRowView<PixelFormat, Mutable>::cend() const -> const_iterato
 
 template <class PixelFormat, bool Mutable>
 constexpr auto ImageRowView<PixelFormat, Mutable>::operator[](std::size_t index) const -> reference {
-  const gsl::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data(
+  const std::span<byte_type, PixelFormat::kBytesPerPixel> pixel_data(
       storage_.data() + index * PixelFormat::kBytesPerPixel, PixelFormat::kBytesPerPixel);
   if constexpr (Mutable) {
     return detail::PixelRef<PixelFormat>(pixel_data, pixelFormat());
