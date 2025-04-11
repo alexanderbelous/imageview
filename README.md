@@ -69,8 +69,7 @@ Example:
   loadImageRGB24(&data, &width, &height);
 
   // Construct a mutable view into the image.
-  const ContinuousImageView<PixelFormatRGB24, true> image(height, width,
-    gsl::as_writable_bytes(gsl::span{data}));
+  const ContinuousImageView<PixelFormatRGB24, true> image(height, width, std::as_writable_bytes(std::span{data}));
 
   // Get the color of the pixel {y = 5, x = 6}.
   const RGB24 color_56 = image(5, 6);
@@ -80,13 +79,13 @@ Example:
 
   // Construct an immutable view into a subimage
   // by removing 10 rows/columns from each side.
-  const ImageView<PixelFormatRGB24> sub_image = imageview::crop(
-    image, 10, 10, height - 20, width - 20);
+  const ImageView<PixelFormatRGB24> sub_image = imageview::crop(image, 10, 10, height - 20, width - 20);
 
   // Compute the number of green pixels in the cropped image.
   constexpr RGB24 kGreen(0, 255, 0);
   std::size_t num_green_pixels = 0;
-  for (int y = 0; y < sub_image.height(); ++y) {
+  for (int y = 0; y < sub_image.height(); ++y)
+  {
     // Construct an immutable view into the row @y of @sub_image.
     const ImageRowView<PixelFormatRGB24> image_row = sub_image.row(y);
     num_green_pixels += std::count(image_row.begin(), image_row.end(), kGreen);
